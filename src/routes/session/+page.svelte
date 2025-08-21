@@ -390,7 +390,7 @@
 			</div>
 
 			<!-- Main recording area -->
-			<div class="flex-1 flex flex-col justify-center items-center px-4 py-8">
+			<div class="flex-1 flex flex-col justify-center items-center px-4 py-8 min-h-0">
 				{#if isRecording}
 					<!-- Recording active -->
 					<div class="text-center">
@@ -422,15 +422,17 @@
 						<p class="text-xl text-amber-400 mb-6">{formatRecordingDuration(recordingDuration)}</p>
 
 						<!-- Audio playback following MDN pattern -->
-						<div class="w-full max-w-xs mb-6">
-							<audio controls class="w-full h-10 rounded-lg" preload="none" src={recordedAudio}>
+						<div class="w-full max-w-sm mb-6">
+							<audio controls class="w-full h-12 rounded-lg" preload="none" src={recordedAudio}>
 								Your browser does not support audio playback.
 							</audio>
 						</div>
 
 						<!-- Transcription section -->
 						{#if transcriptionResult}
-							<div class="w-full max-w-xs mb-6 p-4 bg-gray-800 rounded-xl text-left">
+							<div
+								class="w-full max-w-sm mb-6 p-4 bg-gray-800 rounded-xl text-left max-h-96 overflow-y-auto"
+							>
 								<h3 class="text-sm font-medium text-amber-400 mb-2">Transcription</h3>
 								<p class="text-sm text-gray-200 mb-3">{transcriptionResult}</p>
 
@@ -503,7 +505,7 @@
 
 										{#each inspectionData as hiveData, index}
 											{@const matchedHive = findMatchingHive(hiveData.bikupa, availableHives)}
-											<div class="bg-gray-700 rounded-lg p-3 space-y-2">
+											<div class="bg-gray-700 rounded-lg p-3 space-y-2 text-xs">
 												<div class="flex items-center justify-between">
 													<div class="text-xs font-medium text-amber-400">
 														Hive {index + 1}
@@ -563,21 +565,39 @@
 												{#if hiveData.yngelstatus}
 													<div class="text-xs">
 														<span class="text-gray-400">Yngelstatus:</span>
-														<span class="text-white ml-1 {hiveData.yngelstatus <= 2 ? 'text-red-300' : hiveData.yngelstatus === 3 ? 'text-yellow-300' : 'text-green-300'}">{hiveData.yngelstatus}/5</span>
+														<span
+															class="text-white ml-1 {hiveData.yngelstatus <= 2
+																? 'text-red-300'
+																: hiveData.yngelstatus === 3
+																	? 'text-yellow-300'
+																	: 'text-green-300'}">{hiveData.yngelstatus}/5</span
+														>
 													</div>
 												{/if}
 
 												{#if hiveData.foder}
 													<div class="text-xs">
 														<span class="text-gray-400">Foder:</span>
-														<span class="text-white ml-1 {hiveData.foder <= 2 ? 'text-red-300' : hiveData.foder === 3 ? 'text-yellow-300' : 'text-green-300'}">{hiveData.foder}/5</span>
+														<span
+															class="text-white ml-1 {hiveData.foder <= 2
+																? 'text-red-300'
+																: hiveData.foder === 3
+																	? 'text-yellow-300'
+																	: 'text-green-300'}">{hiveData.foder}/5</span
+														>
 													</div>
 												{/if}
 
 												{#if hiveData.svärmningsrisk}
 													<div class="text-xs">
 														<span class="text-gray-400">Svärmningsrisk:</span>
-														<span class="text-white ml-1 {hiveData.svärmningsrisk >= 4 ? 'text-red-300' : hiveData.svärmningsrisk === 3 ? 'text-yellow-300' : 'text-green-300'}">{hiveData.svärmningsrisk}/5</span>
+														<span
+															class="text-white ml-1 {hiveData.svärmningsrisk >= 4
+																? 'text-red-300'
+																: hiveData.svärmningsrisk === 3
+																	? 'text-yellow-300'
+																	: 'text-green-300'}">{hiveData.svärmningsrisk}/5</span
+														>
 													</div>
 												{/if}
 
@@ -591,7 +611,13 @@
 												{#if hiveData.aggressivitet}
 													<div class="text-xs">
 														<span class="text-gray-400">Aggressivitet:</span>
-														<span class="text-white ml-1 {hiveData.aggressivitet >= 4 ? 'text-red-300' : hiveData.aggressivitet === 3 ? 'text-yellow-300' : 'text-green-300'}">{hiveData.aggressivitet}/5</span>
+														<span
+															class="text-white ml-1 {hiveData.aggressivitet >= 4
+																? 'text-red-300'
+																: hiveData.aggressivitet === 3
+																	? 'text-yellow-300'
+																	: 'text-green-300'}">{hiveData.aggressivitet}/5</span
+														>
 													</div>
 												{/if}
 
@@ -612,21 +638,37 @@
 												{#if hiveData.fuktMögel}
 													<div class="text-xs">
 														<span class="text-gray-400">Fukt/mögel:</span>
-														<span class="text-white ml-1 capitalize {hiveData.fuktMögel === 'ja' ? 'text-red-300' : 'text-green-300'}">{hiveData.fuktMögel}</span>
+														<span
+															class="text-white ml-1 capitalize {hiveData.fuktMögel === 'ja'
+																? 'text-red-300'
+																: 'text-green-300'}">{hiveData.fuktMögel}</span
+														>
 													</div>
 												{/if}
 
 												{#if hiveData.varroastatus}
 													<div class="text-xs">
 														<span class="text-gray-400">Varroa status:</span>
-														<span class="text-white ml-1 {hiveData.varroastatus >= 4 ? 'text-red-300' : hiveData.varroastatus === 3 ? 'text-yellow-300' : 'text-green-300'}">{hiveData.varroastatus}/5</span>
+														<span
+															class="text-white ml-1 {hiveData.varroastatus >= 4
+																? 'text-red-300'
+																: hiveData.varroastatus === 3
+																	? 'text-yellow-300'
+																	: 'text-green-300'}">{hiveData.varroastatus}/5</span
+														>
 													</div>
 												{/if}
 
 												{#if hiveData.kupansSkick}
 													<div class="text-xs">
 														<span class="text-gray-400">Kupans skick:</span>
-														<span class="text-white ml-1 {hiveData.kupansSkick <= 2 ? 'text-red-300' : hiveData.kupansSkick === 3 ? 'text-yellow-300' : 'text-green-300'}">{hiveData.kupansSkick}/5</span>
+														<span
+															class="text-white ml-1 {hiveData.kupansSkick <= 2
+																? 'text-red-300'
+																: hiveData.kupansSkick === 3
+																	? 'text-yellow-300'
+																	: 'text-green-300'}">{hiveData.kupansSkick}/5</span
+														>
 													</div>
 												{/if}
 
@@ -640,7 +682,9 @@
 												{#if hiveData.skattlådorFulla}
 													<div class="text-xs">
 														<span class="text-gray-400">Skattlådor fulla:</span>
-														<span class="text-white ml-1 capitalize">{hiveData.skattlådorFulla}</span>
+														<span class="text-white ml-1 capitalize"
+															>{hiveData.skattlådorFulla}</span
+														>
 													</div>
 												{/if}
 
@@ -726,21 +770,39 @@
 												{#if unmatched.yngelstatus}
 													<div class="text-xs">
 														<span class="text-gray-400">Yngelstatus:</span>
-														<span class="text-white ml-1 {unmatched.yngelstatus <= 2 ? 'text-red-300' : unmatched.yngelstatus === 3 ? 'text-yellow-300' : 'text-green-300'}">{unmatched.yngelstatus}/5</span>
+														<span
+															class="text-white ml-1 {unmatched.yngelstatus <= 2
+																? 'text-red-300'
+																: unmatched.yngelstatus === 3
+																	? 'text-yellow-300'
+																	: 'text-green-300'}">{unmatched.yngelstatus}/5</span
+														>
 													</div>
 												{/if}
 
 												{#if unmatched.foder}
 													<div class="text-xs">
 														<span class="text-gray-400">Foder:</span>
-														<span class="text-white ml-1 {unmatched.foder <= 2 ? 'text-red-300' : unmatched.foder === 3 ? 'text-yellow-300' : 'text-green-300'}">{unmatched.foder}/5</span>
+														<span
+															class="text-white ml-1 {unmatched.foder <= 2
+																? 'text-red-300'
+																: unmatched.foder === 3
+																	? 'text-yellow-300'
+																	: 'text-green-300'}">{unmatched.foder}/5</span
+														>
 													</div>
 												{/if}
 
 												{#if unmatched.svärmningsrisk}
 													<div class="text-xs">
 														<span class="text-gray-400">Svärmningsrisk:</span>
-														<span class="text-white ml-1 {unmatched.svärmningsrisk >= 4 ? 'text-red-300' : unmatched.svärmningsrisk === 3 ? 'text-yellow-300' : 'text-green-300'}">{unmatched.svärmningsrisk}/5</span>
+														<span
+															class="text-white ml-1 {unmatched.svärmningsrisk >= 4
+																? 'text-red-300'
+																: unmatched.svärmningsrisk === 3
+																	? 'text-yellow-300'
+																	: 'text-green-300'}">{unmatched.svärmningsrisk}/5</span
+														>
 													</div>
 												{/if}
 
@@ -754,7 +816,13 @@
 												{#if unmatched.aggressivitet}
 													<div class="text-xs">
 														<span class="text-gray-400">Aggressivitet:</span>
-														<span class="text-white ml-1 {unmatched.aggressivitet >= 4 ? 'text-red-300' : unmatched.aggressivitet === 3 ? 'text-yellow-300' : 'text-green-300'}">{unmatched.aggressivitet}/5</span>
+														<span
+															class="text-white ml-1 {unmatched.aggressivitet >= 4
+																? 'text-red-300'
+																: unmatched.aggressivitet === 3
+																	? 'text-yellow-300'
+																	: 'text-green-300'}">{unmatched.aggressivitet}/5</span
+														>
 													</div>
 												{/if}
 
@@ -775,21 +843,37 @@
 												{#if unmatched.fuktMögel}
 													<div class="text-xs">
 														<span class="text-gray-400">Fukt/mögel:</span>
-														<span class="text-white ml-1 capitalize {unmatched.fuktMögel === 'ja' ? 'text-red-300' : 'text-green-300'}">{unmatched.fuktMögel}</span>
+														<span
+															class="text-white ml-1 capitalize {unmatched.fuktMögel === 'ja'
+																? 'text-red-300'
+																: 'text-green-300'}">{unmatched.fuktMögel}</span
+														>
 													</div>
 												{/if}
 
 												{#if unmatched.varroastatus}
 													<div class="text-xs">
 														<span class="text-gray-400">Varroa status:</span>
-														<span class="text-white ml-1 {unmatched.varroastatus >= 4 ? 'text-red-300' : unmatched.varroastatus === 3 ? 'text-yellow-300' : 'text-green-300'}">{unmatched.varroastatus}/5</span>
+														<span
+															class="text-white ml-1 {unmatched.varroastatus >= 4
+																? 'text-red-300'
+																: unmatched.varroastatus === 3
+																	? 'text-yellow-300'
+																	: 'text-green-300'}">{unmatched.varroastatus}/5</span
+														>
 													</div>
 												{/if}
 
 												{#if unmatched.kupansSkick}
 													<div class="text-xs">
 														<span class="text-gray-400">Kupans skick:</span>
-														<span class="text-white ml-1 {unmatched.kupansSkick <= 2 ? 'text-red-300' : unmatched.kupansSkick === 3 ? 'text-yellow-300' : 'text-green-300'}">{unmatched.kupansSkick}/5</span>
+														<span
+															class="text-white ml-1 {unmatched.kupansSkick <= 2
+																? 'text-red-300'
+																: unmatched.kupansSkick === 3
+																	? 'text-yellow-300'
+																	: 'text-green-300'}">{unmatched.kupansSkick}/5</span
+														>
 													</div>
 												{/if}
 
@@ -803,7 +887,9 @@
 												{#if unmatched.skattlådorFulla}
 													<div class="text-xs">
 														<span class="text-gray-400">Skattlådor fulla:</span>
-														<span class="text-white ml-1 capitalize">{unmatched.skattlådorFulla}</span>
+														<span class="text-white ml-1 capitalize"
+															>{unmatched.skattlådorFulla}</span
+														>
 													</div>
 												{/if}
 
@@ -822,10 +908,12 @@
 
 												<!-- Hive Selection Dropdown -->
 												<div class="border-t border-orange-700 pt-2">
-													<label class="block text-xs text-orange-300 mb-1"
-														>Tilldela till kupa:</label
+													<label
+														for={`hive-select-${index}`}
+														class="block text-xs text-orange-300 mb-1">Tilldela till kupa:</label
 													>
 													<select
+														id={`hive-select-${index}`}
 														bind:value={manualAssignments[index]}
 														class="w-full px-2 py-1 bg-gray-800 border border-orange-600 text-white text-xs rounded focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
 													>

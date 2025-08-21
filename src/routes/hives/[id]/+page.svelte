@@ -101,7 +101,6 @@
 
 			<!-- Latest Status Card -->
 			{#if latestInspection}
-				
 				<div class="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
 					<div class="flex items-center justify-between mb-3">
 						<h2 class="text-lg font-semibold text-gray-900">Senaste Status</h2>
@@ -120,7 +119,9 @@
 					</div>
 
 					<!-- Status Overview Card -->
-					<div class="bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl p-4 border border-amber-200">
+					<div
+						class="bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl p-4 border border-amber-200"
+					>
 						<div class="flex items-center gap-2 mb-3">
 							<div class="w-2 h-2 rounded-full bg-amber-500"></div>
 							<h4 class="font-semibold text-gray-800">Inspektionsöversikt</h4>
@@ -133,7 +134,11 @@
 									<span class="text-lg">👑</span>
 									<div>
 										<div class="text-xs text-gray-600">Drottning</div>
-										<span class="text-sm font-medium {getStatusColor(latestInspection.finnsDrottning)} capitalize">
+										<span
+											class="text-sm font-medium {getStatusColor(
+												latestInspection.finnsDrottning
+											)} capitalize"
+										>
 											{latestInspection.finnsDrottning}
 										</span>
 									</div>
@@ -145,7 +150,11 @@
 									<span class="text-lg">🥚</span>
 									<div>
 										<div class="text-xs text-gray-600">Ägg</div>
-										<span class="text-sm font-medium {getStatusColor(latestInspection.nylagdaÄgg)} capitalize">
+										<span
+											class="text-sm font-medium {getStatusColor(
+												latestInspection.nylagdaÄgg
+											)} capitalize"
+										>
 											{latestInspection.nylagdaÄgg}
 										</span>
 									</div>
@@ -163,7 +172,11 @@
 											</span>
 											<div class="flex gap-0.5">
 												{#each Array(5) as _, i}
-													<div class="w-1.5 h-1.5 rounded-full {i < latestInspection.mängdBin ? 'bg-current' : 'bg-gray-200'} {getHealthColor(latestInspection.mängdBin)}"></div>
+													<div
+														class="w-1.5 h-1.5 rounded-full {i < latestInspection.mängdBin
+															? 'bg-current'
+															: 'bg-gray-200'} {getHealthColor(latestInspection.mängdBin)}"
+													></div>
 												{/each}
 											</div>
 										</div>
@@ -177,12 +190,18 @@
 									<div>
 										<div class="text-xs text-gray-600">Hälsa</div>
 										<div class="flex items-center gap-1">
-											<span class="text-sm font-medium {getHealthColor(latestInspection.binasHälsa)}">
+											<span
+												class="text-sm font-medium {getHealthColor(latestInspection.binasHälsa)}"
+											>
 												{latestInspection.binasHälsa}/5
 											</span>
 											<div class="flex gap-0.5">
 												{#each Array(5) as _, i}
-													<div class="w-1.5 h-1.5 rounded-full {i < latestInspection.binasHälsa ? 'bg-current' : 'bg-gray-200'} {getHealthColor(latestInspection.binasHälsa)}"></div>
+													<div
+														class="w-1.5 h-1.5 rounded-full {i < latestInspection.binasHälsa
+															? 'bg-current'
+															: 'bg-gray-200'} {getHealthColor(latestInspection.binasHälsa)}"
+													></div>
 												{/each}
 											</div>
 										</div>
@@ -197,12 +216,18 @@
 									<div>
 										<div class="text-xs text-gray-600">Yngelstatus</div>
 										<div class="flex items-center gap-1">
-											<span class="text-sm font-medium {getHealthColor(latestInspection.yngelstatus)}">
+											<span
+												class="text-sm font-medium {getHealthColor(latestInspection.yngelstatus)}"
+											>
 												{latestInspection.yngelstatus}/5
 											</span>
 											<div class="flex gap-0.5">
 												{#each Array(5) as _, i}
-													<div class="w-1.5 h-1.5 rounded-full {i < latestInspection.yngelstatus ? 'bg-current' : 'bg-gray-200'} {getHealthColor(latestInspection.yngelstatus)}"></div>
+													<div
+														class="w-1.5 h-1.5 rounded-full {i < latestInspection.yngelstatus
+															? 'bg-current'
+															: 'bg-gray-200'} {getHealthColor(latestInspection.yngelstatus)}"
+													></div>
 												{/each}
 											</div>
 										</div>
@@ -221,7 +246,11 @@
 											</span>
 											<div class="flex gap-0.5">
 												{#each Array(5) as _, i}
-													<div class="w-1.5 h-1.5 rounded-full {i < latestInspection.foder ? 'bg-current' : 'bg-gray-200'} {getHealthColor(latestInspection.foder)}"></div>
+													<div
+														class="w-1.5 h-1.5 rounded-full {i < latestInspection.foder
+															? 'bg-current'
+															: 'bg-gray-200'} {getHealthColor(latestInspection.foder)}"
+													></div>
 												{/each}
 											</div>
 										</div>
@@ -236,12 +265,26 @@
 									<div>
 										<div class="text-xs text-gray-600">Svärmningsrisk</div>
 										<div class="flex items-center gap-1">
-											<span class="text-sm font-medium {latestInspection.svärmningsrisk >= 4 ? 'text-red-600' : latestInspection.svärmningsrisk === 3 ? 'text-yellow-600' : 'text-green-600'}">
+											<span
+												class="text-sm font-medium {latestInspection.svärmningsrisk >= 4
+													? 'text-red-600'
+													: latestInspection.svärmningsrisk === 3
+														? 'text-yellow-600'
+														: 'text-green-600'}"
+											>
 												{latestInspection.svärmningsrisk}/5
 											</span>
 											<div class="flex gap-0.5">
 												{#each Array(5) as _, i}
-													<div class="w-1.5 h-1.5 rounded-full {i < latestInspection.svärmningsrisk ? 'bg-current' : 'bg-gray-200'} {latestInspection.svärmningsrisk >= 4 ? 'text-red-600' : latestInspection.svärmningsrisk === 3 ? 'text-yellow-600' : 'text-green-600'}"></div>
+													<div
+														class="w-1.5 h-1.5 rounded-full {i < latestInspection.svärmningsrisk
+															? 'bg-current'
+															: 'bg-gray-200'} {latestInspection.svärmningsrisk >= 4
+															? 'text-red-600'
+															: latestInspection.svärmningsrisk === 3
+																? 'text-yellow-600'
+																: 'text-green-600'}"
+													></div>
 												{/each}
 											</div>
 										</div>
@@ -255,12 +298,23 @@
 									<div>
 										<div class="text-xs text-gray-600">Aktivitet</div>
 										<div class="flex items-center gap-1">
-											<span class="text-sm font-medium {getHealthColor(latestInspection.aktivitetVidFlustret)}">
+											<span
+												class="text-sm font-medium {getHealthColor(
+													latestInspection.aktivitetVidFlustret
+												)}"
+											>
 												{latestInspection.aktivitetVidFlustret}/5
 											</span>
 											<div class="flex gap-0.5">
 												{#each Array(5) as _, i}
-													<div class="w-1.5 h-1.5 rounded-full {i < latestInspection.aktivitetVidFlustret ? 'bg-current' : 'bg-gray-200'} {getHealthColor(latestInspection.aktivitetVidFlustret)}"></div>
+													<div
+														class="w-1.5 h-1.5 rounded-full {i <
+														latestInspection.aktivitetVidFlustret
+															? 'bg-current'
+															: 'bg-gray-200'} {getHealthColor(
+															latestInspection.aktivitetVidFlustret
+														)}"
+													></div>
 												{/each}
 											</div>
 										</div>
@@ -274,12 +328,26 @@
 									<div>
 										<div class="text-xs text-gray-600">Aggressivitet</div>
 										<div class="flex items-center gap-1">
-											<span class="text-sm font-medium {latestInspection.aggressivitet >= 4 ? 'text-red-600' : latestInspection.aggressivitet === 3 ? 'text-yellow-600' : 'text-green-600'}">
+											<span
+												class="text-sm font-medium {latestInspection.aggressivitet >= 4
+													? 'text-red-600'
+													: latestInspection.aggressivitet === 3
+														? 'text-yellow-600'
+														: 'text-green-600'}"
+											>
 												{latestInspection.aggressivitet}/5
 											</span>
 											<div class="flex gap-0.5">
 												{#each Array(5) as _, i}
-													<div class="w-1.5 h-1.5 rounded-full {i < latestInspection.aggressivitet ? 'bg-current' : 'bg-gray-200'} {latestInspection.aggressivitet >= 4 ? 'text-red-600' : latestInspection.aggressivitet === 3 ? 'text-yellow-600' : 'text-green-600'}"></div>
+													<div
+														class="w-1.5 h-1.5 rounded-full {i < latestInspection.aggressivitet
+															? 'bg-current'
+															: 'bg-gray-200'} {latestInspection.aggressivitet >= 4
+															? 'text-red-600'
+															: latestInspection.aggressivitet === 3
+																? 'text-yellow-600'
+																: 'text-green-600'}"
+													></div>
 												{/each}
 											</div>
 										</div>
@@ -293,7 +361,12 @@
 									<span class="text-lg">💧</span>
 									<div>
 										<div class="text-xs text-gray-600">Fukt/Mögel</div>
-										<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {latestInspection.fuktMögel === 'ja' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'} capitalize">
+										<span
+											class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {latestInspection.fuktMögel ===
+											'ja'
+												? 'bg-red-100 text-red-800'
+												: 'bg-green-100 text-green-800'} capitalize"
+										>
 											{latestInspection.fuktMögel}
 										</span>
 									</div>
@@ -306,12 +379,26 @@
 									<div>
 										<div class="text-xs text-gray-600">Varroa</div>
 										<div class="flex items-center gap-1">
-											<span class="text-sm font-medium {latestInspection.varroastatus >= 4 ? 'text-red-600' : latestInspection.varroastatus === 3 ? 'text-yellow-600' : 'text-green-600'}">
+											<span
+												class="text-sm font-medium {latestInspection.varroastatus >= 4
+													? 'text-red-600'
+													: latestInspection.varroastatus === 3
+														? 'text-yellow-600'
+														: 'text-green-600'}"
+											>
 												{latestInspection.varroastatus}/5
 											</span>
 											<div class="flex gap-0.5">
 												{#each Array(5) as _, i}
-													<div class="w-1.5 h-1.5 rounded-full {i < latestInspection.varroastatus ? 'bg-current' : 'bg-gray-200'} {latestInspection.varroastatus >= 4 ? 'text-red-600' : latestInspection.varroastatus === 3 ? 'text-yellow-600' : 'text-green-600'}"></div>
+													<div
+														class="w-1.5 h-1.5 rounded-full {i < latestInspection.varroastatus
+															? 'bg-current'
+															: 'bg-gray-200'} {latestInspection.varroastatus >= 4
+															? 'text-red-600'
+															: latestInspection.varroastatus === 3
+																? 'text-yellow-600'
+																: 'text-green-600'}"
+													></div>
 												{/each}
 											</div>
 										</div>
@@ -325,12 +412,26 @@
 									<div>
 										<div class="text-xs text-gray-600">Kupans skick</div>
 										<div class="flex items-center gap-1">
-											<span class="text-sm font-medium {latestInspection.kupansSkick <= 2 ? 'text-red-600' : latestInspection.kupansSkick === 3 ? 'text-yellow-600' : 'text-green-600'}">
+											<span
+												class="text-sm font-medium {latestInspection.kupansSkick <= 2
+													? 'text-red-600'
+													: latestInspection.kupansSkick === 3
+														? 'text-yellow-600'
+														: 'text-green-600'}"
+											>
 												{latestInspection.kupansSkick}/5
 											</span>
 											<div class="flex gap-0.5">
 												{#each Array(5) as _, i}
-													<div class="w-1.5 h-1.5 rounded-full {i < latestInspection.kupansSkick ? 'bg-current' : 'bg-gray-200'} {latestInspection.kupansSkick <= 2 ? 'text-red-600' : latestInspection.kupansSkick === 3 ? 'text-yellow-600' : 'text-green-600'}"></div>
+													<div
+														class="w-1.5 h-1.5 rounded-full {i < latestInspection.kupansSkick
+															? 'bg-current'
+															: 'bg-gray-200'} {latestInspection.kupansSkick <= 2
+															? 'text-red-600'
+															: latestInspection.kupansSkick === 3
+																? 'text-yellow-600'
+																: 'text-green-600'}"
+													></div>
 												{/each}
 											</div>
 										</div>
@@ -356,7 +457,12 @@
 									<span class="text-lg">📊</span>
 									<div>
 										<div class="text-xs text-gray-600">Lådor fulla</div>
-										<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {latestInspection.skattlådorFulla === 'ja' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'} capitalize">
+										<span
+											class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {latestInspection.skattlådorFulla ===
+											'ja'
+												? 'bg-green-100 text-green-800'
+												: 'bg-gray-100 text-gray-800'} capitalize"
+										>
 											{latestInspection.skattlådorFulla}
 										</span>
 									</div>
@@ -464,7 +570,9 @@
 									{#if typedInspection.finnsDrottning}
 										<div>
 											<span class="text-gray-600">Drottning:</span>
-											<span class="ml-1 {getStatusColor(typedInspection.finnsDrottning)} capitalize">
+											<span
+												class="ml-1 {getStatusColor(typedInspection.finnsDrottning)} capitalize"
+											>
 												{typedInspection.finnsDrottning}
 											</span>
 										</div>
@@ -520,7 +628,13 @@
 									{#if typedInspection.svärmningsrisk}
 										<div>
 											<span class="text-gray-600">Svärmningsrisk:</span>
-											<span class="ml-1 {typedInspection.svärmningsrisk >= 4 ? 'text-red-600' : typedInspection.svärmningsrisk === 3 ? 'text-yellow-600' : 'text-green-600'}">
+											<span
+												class="ml-1 {typedInspection.svärmningsrisk >= 4
+													? 'text-red-600'
+													: typedInspection.svärmningsrisk === 3
+														? 'text-yellow-600'
+														: 'text-green-600'}"
+											>
 												{typedInspection.svärmningsrisk}/5
 											</span>
 										</div>
@@ -538,7 +652,13 @@
 									{#if typedInspection.aggressivitet}
 										<div>
 											<span class="text-gray-600">Aggressivitet:</span>
-											<span class="ml-1 {typedInspection.aggressivitet >= 4 ? 'text-red-600' : typedInspection.aggressivitet === 3 ? 'text-yellow-600' : 'text-green-600'}">
+											<span
+												class="ml-1 {typedInspection.aggressivitet >= 4
+													? 'text-red-600'
+													: typedInspection.aggressivitet === 3
+														? 'text-yellow-600'
+														: 'text-green-600'}"
+											>
 												{typedInspection.aggressivitet}/5
 											</span>
 										</div>
@@ -548,7 +668,11 @@
 									{#if typedInspection.fuktMögel}
 										<div>
 											<span class="text-gray-600">Fukt/Mögel:</span>
-											<span class="ml-1 {typedInspection.fuktMögel === 'ja' ? 'text-red-600' : 'text-green-600'} capitalize">
+											<span
+												class="ml-1 {typedInspection.fuktMögel === 'ja'
+													? 'text-red-600'
+													: 'text-green-600'} capitalize"
+											>
 												{typedInspection.fuktMögel}
 											</span>
 										</div>
@@ -557,7 +681,13 @@
 									{#if typedInspection.varroastatus}
 										<div>
 											<span class="text-gray-600">Varroa:</span>
-											<span class="ml-1 {typedInspection.varroastatus >= 4 ? 'text-red-600' : typedInspection.varroastatus === 3 ? 'text-yellow-600' : 'text-green-600'}">
+											<span
+												class="ml-1 {typedInspection.varroastatus >= 4
+													? 'text-red-600'
+													: typedInspection.varroastatus === 3
+														? 'text-yellow-600'
+														: 'text-green-600'}"
+											>
 												{typedInspection.varroastatus}/5
 											</span>
 										</div>
@@ -566,7 +696,13 @@
 									{#if typedInspection.kupansSkick}
 										<div>
 											<span class="text-gray-600">Kupans skick:</span>
-											<span class="ml-1 {typedInspection.kupansSkick <= 2 ? 'text-red-600' : typedInspection.kupansSkick === 3 ? 'text-yellow-600' : 'text-green-600'}">
+											<span
+												class="ml-1 {typedInspection.kupansSkick <= 2
+													? 'text-red-600'
+													: typedInspection.kupansSkick === 3
+														? 'text-yellow-600'
+														: 'text-green-600'}"
+											>
 												{typedInspection.kupansSkick}/5
 											</span>
 										</div>
@@ -585,7 +721,11 @@
 									{#if typedInspection.skattlådorFulla}
 										<div>
 											<span class="text-gray-600">Lådor fulla:</span>
-											<span class="ml-1 {typedInspection.skattlådorFulla === 'ja' ? 'text-green-600' : 'text-gray-600'} capitalize">
+											<span
+												class="ml-1 {typedInspection.skattlådorFulla === 'ja'
+													? 'text-green-600'
+													: 'text-gray-600'} capitalize"
+											>
 												{typedInspection.skattlådorFulla}
 											</span>
 										</div>

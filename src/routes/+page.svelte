@@ -97,7 +97,7 @@
 
 		<!-- Quick stats -->
 		{#if availableHives.length > 0 || sessionCount > 0}
-			<div class="bg-white rounded-xl border p-4">
+			<div class="bg-white rounded-2xl border p-4 mb-4">
 				<div class="grid grid-cols-2 gap-4">
 					<div class="text-center">
 						<div class="text-2xl font-bold text-gray-900">{availableHives.length}</div>
@@ -112,19 +112,19 @@
 		{/if}
 
 		<!-- Quick actions -->
-		<div class="mt-4 grid grid-cols-2 gap-3">
+		<div class="grid grid-cols-2 gap-3">
 			<a
 				href="/hives"
-				class="bg-white rounded-xl border p-4 text-center active:scale-95 transition-all duration-200"
+				class="bg-white rounded-2xl border p-4 text-center active:scale-95 transition-all duration-200 hover:shadow-sm"
 			>
-				<div class="text-lg mb-1">▢</div>
+				<div class="text-2xl mb-2">▢</div>
 				<div class="text-sm font-medium text-gray-900">Hantera Kupor</div>
 			</a>
 			<a
 				href="/sessions"
-				class="bg-white rounded-xl border p-4 text-center active:scale-95 transition-all duration-200"
+				class="bg-white rounded-2xl border p-4 text-center active:scale-95 transition-all duration-200 hover:shadow-sm"
 			>
-				<div class="text-lg mb-1">≡</div>
+				<div class="text-2xl mb-2">≡</div>
 				<div class="text-sm font-medium text-gray-900">Visa Sessioner</div>
 			</a>
 		</div>

@@ -1,7 +1,15 @@
 {
-	"permissions": {
-		"allow": ["Bash(pnpm dev:*)", "Bash(pnpm check:*)", "Bash(pnpm format:*)"]
-	},
-	"enableAllProjectMcpServers": true,
-	"enabledMcpjsonServers": ["svelte-llm"]
+  "permissions": {
+    "allow": [
+      "Bash(pnpm dev:*)",
+      "Bash(pnpm check:*)",
+      "Bash(pnpm format:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(pnpm build:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "svelte-llm"
+  ]
 }

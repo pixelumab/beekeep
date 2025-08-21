@@ -168,6 +168,15 @@
 					<div
 						class="bg-white rounded-xl border p-4 cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98] transition-transform"
 						onclick={() => openHiveDetail(hive)}
+						onkeydown={(e) => {
+							if (e.key === 'Enter' || e.key === ' ') {
+								e.preventDefault();
+								openHiveDetail(hive);
+							}
+						}}
+						role="button"
+						tabindex="0"
+						aria-label={`View details for ${hive.name}`}
 					>
 						<!-- Hive header -->
 						<div class="flex items-start justify-between mb-3">
@@ -218,17 +227,20 @@
 						<!-- Latest Inspection Status -->
 						{#if latestInspection}
 							<div class="border-t border-gray-100 pt-3 mt-3">
-								<div class="flex items-center justify-between mb-2">
+								<div class="flex items-center justify-between mb-3">
 									<span class="text-xs font-medium text-gray-600">Senaste Status</span>
-									<div class="flex items-center gap-1">
+									<div class="flex items-center gap-2">
 										<span class="text-xs text-gray-500"
 											>{formatDate(latestInspection.timestamp)}</span
 										>
 										{#if latestInspection.source === 'ai'}
-											<span class="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">AI</span
+											<span
+												class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium"
+												>AI</span
 											>
 										{:else}
-											<span class="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded"
+											<span
+												class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium"
 												>Manual</span
 											>
 										{/if}
@@ -237,7 +249,7 @@
 
 								<div class="grid grid-cols-2 gap-3 text-xs">
 									{#if latestInspection.finnsDrottning}
-										<div class="flex items-center gap-1">
+										<div class="flex items-center gap-1.5 bg-gray-50 rounded-lg p-2">
 											<span class="text-gray-600">👑</span>
 											<span
 												class="{getStatusColor(
@@ -250,7 +262,7 @@
 									{/if}
 
 									{#if latestInspection.nylagdaÄgg}
-										<div class="flex items-center gap-1">
+										<div class="flex items-center gap-1.5 bg-gray-50 rounded-lg p-2">
 											<span class="text-gray-600">🥚</span>
 											<span
 												class="{getStatusColor(latestInspection.nylagdaÄgg)} font-medium capitalize"
@@ -261,7 +273,7 @@
 									{/if}
 
 									{#if latestInspection.mängdBin}
-										<div class="flex items-center gap-1">
+										<div class="flex items-center gap-1.5 bg-gray-50 rounded-lg p-2">
 											<span class="text-gray-600">🐝</span>
 											<span class="{getHealthColor(latestInspection.mängdBin)} font-medium">
 												{latestInspection.mängdBin}/5
@@ -270,7 +282,7 @@
 									{/if}
 
 									{#if latestInspection.binasHälsa}
-										<div class="flex items-center gap-1">
+										<div class="flex items-center gap-1.5 bg-gray-50 rounded-lg p-2">
 											<span class="text-gray-600">❤️</span>
 											<span class="{getHealthColor(latestInspection.binasHälsa)} font-medium">
 												{latestInspection.binasHälsa}/5
@@ -297,7 +309,7 @@
 	{#if showAddForm}
 		<div class="fixed inset-0 bg-black/50 flex items-end z-50" onclick={resetForm}>
 			<div
-				class="bg-white rounded-t-2xl w-full max-h-[85vh] flex flex-col"
+				class="bg-white rounded-t-2xl w-full max-h-[90vh] flex flex-col shadow-2xl"
 				onclick={(e) => e.stopPropagation()}
 			>
 				<!-- Modal handle -->
@@ -317,8 +329,11 @@
 					<div class="space-y-4">
 						<!-- Name -->
 						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2"> Kupnamn * </label>
+							<label for="hive-name" class="block text-sm font-medium text-gray-700 mb-2">
+								Kupnamn *
+							</label>
 							<input
+								id="hive-name"
 								type="text"
 								bind:value={formName}
 								placeholder="Huvudkupa, Norra kupan..."
@@ -328,8 +343,11 @@
 
 						<!-- Location -->
 						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2"> Plats </label>
+							<label for="hive-location" class="block text-sm font-medium text-gray-700 mb-2">
+								Plats
+							</label>
 							<input
+								id="hive-location"
 								type="text"
 								bind:value={formLocation}
 								placeholder="Bakgård, Trädgård..."
@@ -339,26 +357,32 @@
 
 						<!-- Color -->
 						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2"> Färg </label>
-							<div class="grid grid-cols-8 gap-3">
-								{#each hiveColors as color}
-									<button
-										type="button"
-										onclick={() => (formColor = color)}
-										class="w-8 h-8 rounded-full border-2 active:scale-110 transition-all {formColor ===
-										color
-											? 'border-gray-800 scale-110'
-											: 'border-gray-200'}"
-										style="background-color: {color}"
-									></button>
-								{/each}
-							</div>
+							<fieldset>
+								<legend class="block text-sm font-medium text-gray-700 mb-2">Färg</legend>
+								<div class="grid grid-cols-8 gap-3">
+									{#each hiveColors as color, index}
+										<button
+											type="button"
+											onclick={() => (formColor = color)}
+											class="w-8 h-8 rounded-full border-2 active:scale-110 transition-all {formColor ===
+											color
+												? 'border-gray-800 scale-110'
+												: 'border-gray-200'}"
+											style="background-color: {color}"
+											aria-label={`Color option ${index + 1}`}
+										></button>
+									{/each}
+								</div>
+							</fieldset>
 						</div>
 
 						<!-- Notes -->
 						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2"> Anteckningar </label>
+							<label for="hive-notes" class="block text-sm font-medium text-gray-700 mb-2">
+								Anteckningar
+							</label>
 							<textarea
+								id="hive-notes"
 								bind:value={formNotes}
 								placeholder="Ytterligare anteckningar om denna kupa..."
 								rows="3"

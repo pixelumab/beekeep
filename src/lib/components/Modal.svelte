@@ -36,6 +36,8 @@
 		<div
 			class="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md max-h-[80vh] overflow-y-auto shadow-2xl"
 			onclick={(e) => e.stopPropagation()}
+			onkeydown={(e) => e.stopPropagation()}
+			role="document"
 		>
 			{#if title || onClose}
 				<!-- Header -->

@@ -214,14 +214,14 @@ export const inspections = {
 			const stored = localStorage.getItem('beekeep-inspections');
 			if (stored) {
 				const parsedInspections = JSON.parse(stored);
-				
+
 				// Migrate legacy inspections to include new status fields
 				const migratedInspections = parsedInspections.map((inspection: any) => {
 					// Check if inspection is already migrated (has new fields structure)
 					if (inspection._migrated === true) {
 						return inspection;
 					}
-					
+
 					// Add default values for missing status fields
 					return {
 						...inspection,
@@ -242,7 +242,7 @@ export const inspections = {
 						_migrated: true // Mark as migrated
 					};
 				});
-				
+
 				// Save migrated inspections back to localStorage
 				localStorage.setItem('beekeep-inspections', JSON.stringify(migratedInspections));
 				inspectionsState.splice(0, inspectionsState.length, ...migratedInspections);
