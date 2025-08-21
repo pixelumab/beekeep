@@ -1,36 +1,28 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { sessions, hives } from '$lib/stores.js';
+	import { sessions, hives, getSessions, getHives } from '$lib/stores.svelte.js';
 	import type { InspectionSession, Hive } from '$lib/types.js';
 
-	let allSessions = $state<InspectionSession[]>([]);
-	let availableHives = $state<Hive[]>([]);
+	let allSessions = $derived([...getSessions()].reverse());
+	let availableHives = $derived(hives.getActiveHives(getHives()));
 
 	onMount(() => {
 		sessions.load();
 		hives.load();
 	});
 
-	$effect(() => {
-		allSessions = [...$sessions].reverse();
-	});
-
-	$effect(() => {
-		availableHives = hives.getActiveHives($hives);
-	});
-
 	function formatDate(dateString: string): string {
-		return new Date(dateString).toLocaleDateString('en-US', {
+		return new Date(dateString).toLocaleDateString('sv-SE', {
 			month: 'short',
 			day: 'numeric'
 		});
 	}
 
 	function formatTime(dateString: string): string {
-		return new Date(dateString).toLocaleTimeString('en-US', {
+		return new Date(dateString).toLocaleTimeString('sv-SE', {
 			hour: 'numeric',
 			minute: '2-digit',
-			hour12: true
+			hour12: false
 		});
 	}
 
@@ -46,9 +38,9 @@
 
 		let dayPrefix = '';
 		if (dateStr === todayStr) {
-			dayPrefix = 'Today';
+			dayPrefix = 'Idag';
 		} else if (dateStr === yesterdayStr) {
-			dayPrefix = 'Yesterday';
+			dayPrefix = 'Igår';
 		} else {
 			dayPrefix = formatDate(dateString);
 		}
@@ -62,7 +54,7 @@
 	}
 
 	function getSessionTitle(session: InspectionSession): string {
-		return `Recording Session`;
+		return `Inspelningssession`;
 	}
 
 	function getSessionSubtitle(session: InspectionSession): string {
@@ -72,10 +64,10 @@
 	function getInspectionSummary(session: InspectionSession): string {
 		const hiveCount = session.inspectionResults?.length || 0;
 		if (hiveCount === 0) {
-			return 'No inspection data';
+			return 'Ingen inspektionsdata';
 		}
-		const hiveText = hiveCount === 1 ? 'hive' : 'hives';
-		return `${hiveCount} ${hiveText} inspected`;
+		const hiveText = hiveCount === 1 ? 'kupa' : 'kupor';
+		return `${hiveCount} ${hiveText} inspekterade`;
 	}
 
 	function getDetailedInspectionSummary(session: InspectionSession) {
@@ -92,12 +84,29 @@
 				? (healthScores.reduce((a, b) => a! + b!, 0)! / healthScores.length).toFixed(1)
 				: null;
 
+		// Check for critical issues across new fields (simplified to ja/nej and 1-5 scales)
+		const highSwarmingRisk = results.some((r) => r.svärmningsrisk && r.svärmningsrisk >= 4);
+		const highVarroaStatus = results.some((r) => r.varroastatus && r.varroastatus >= 4);
+		const poorHiveCondition = results.some((r) => r.kupansSkick && r.kupansSkick <= 2);
+		const moistureIssues = results.some((r) => r.fuktMögel === 'ja');
+		const foodShortage = results.some((r) => r.foder && r.foder <= 2);
+		const aggressiveBees = results.some((r) => r.aggressivitet && r.aggressivitet >= 4);
+
 		return {
 			totalHives: results.length,
 			queens,
 			eggs,
 			avgHealth,
-			hasIssues: results.some((r) => r.binasHälsa && r.binasHälsa <= 2)
+			hasIssues: results.some((r) => r.binasHälsa && r.binasHälsa <= 2),
+			// New critical indicators
+			hasSwarmingRisk: highSwarmingRisk,
+			hasVarroaIssues: highVarroaStatus,
+			hasConditionIssues: poorHiveCondition,
+			hasMoistureIssues: moistureIssues,
+			hasFoodShortage: foodShortage,
+			hasAggressiveBees: aggressiveBees,
+			// Summary of planned actions
+			hasPlannedActions: results.some((r) => r.planeradÅtgärd && r.planeradÅtgärd.trim())
 		};
 	}
 
@@ -150,21 +159,21 @@
 <div class="min-h-full bg-gray-50">
 	<!-- Fixed header -->
 	<div class="bg-white border-b px-4 py-3">
-		<h1 class="text-xl font-bold text-gray-900">Sessions</h1>
-		<p class="text-sm text-gray-600">{allSessions.length} recordings</p>
+		<h1 class="text-xl font-bold text-gray-900">Sessioner</h1>
+		<p class="text-sm text-gray-600">{allSessions.length} inspelningar</p>
 	</div>
 
 	<div class="px-4 py-4">
 		{#if allSessions.length === 0}
 			<div class="text-center py-12">
 				<div class="text-4xl mb-4 text-gray-400">≡</div>
-				<h2 class="text-lg font-semibold text-gray-900 mb-2">No Sessions Yet</h2>
-				<p class="text-sm text-gray-600 mb-6">Start your first recording</p>
+				<h2 class="text-lg font-semibold text-gray-900 mb-2">Inga Sessioner Än</h2>
+				<p class="text-sm text-gray-600 mb-6">Starta din första inspelning</p>
 				<a
 					href="/"
 					class="inline-block bg-amber-600 text-white px-6 py-3 rounded-xl font-medium active:scale-95 transition-all duration-200"
 				>
-					Start Recording
+					Starta Inspelning
 				</a>
 			</div>
 		{:else}
@@ -233,13 +242,12 @@
 										<div class="flex items-center gap-1">
 											<span class="text-green-700">👑</span>
 											<span class="text-green-800"
-												>{summary.queens}/{summary.totalHives} queens found</span
+												>{summary.queens}/{summary.totalHives} drottningar hittade</span
 											>
 										</div>
 										<div class="flex items-center gap-1">
 											<span class="text-green-700">🥚</span>
-											<span class="text-green-800"
-												>{summary.eggs}/{summary.totalHives} with eggs</span
+											<span class="text-green-800">{summary.eggs}/{summary.totalHives} med ägg</span
 											>
 										</div>
 										{#if summary.avgHealth}
@@ -253,15 +261,53 @@
 										<div class="flex items-center gap-1">
 											<span class="text-green-700">🐝</span>
 											<span class="text-green-800"
-												>{summary.totalHives} hive{summary.totalHives > 1 ? 's' : ''}</span
+												>{summary.totalHives} kupa{summary.totalHives > 1 ? 'r' : ''}</span
 											>
 										</div>
 									</div>
-									{#if summary.hasIssues}
-										<div class="mt-2 text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-lg">
-											⚠️ Some hives show health concerns
-										</div>
-									{/if}
+									<!-- Critical Alerts -->
+									<div class="mt-2 space-y-1">
+										{#if summary.hasSwarmingRisk}
+											<div class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-lg">
+												🚨 High swarming risk detected
+											</div>
+										{/if}
+										{#if summary.hasVarroaIssues}
+											<div class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-lg">
+												🦠 High Varroa mite levels
+											</div>
+										{/if}
+										{#if summary.hasAggressiveBees}
+											<div class="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-lg">
+												😤 Aggressive bee behavior
+											</div>
+										{/if}
+										{#if summary.hasFoodShortage}
+											<div class="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-lg">
+												🍯 Food shortage detected
+											</div>
+										{/if}
+										{#if summary.hasConditionIssues}
+											<div class="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-lg">
+												🏠 Hive condition issues
+											</div>
+										{/if}
+										{#if summary.hasMoistureIssues}
+											<div class="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-lg">
+												💧 Moisture/mold detected
+											</div>
+										{/if}
+										{#if summary.hasIssues && !summary.hasSwarmingRisk && !summary.hasVarroaIssues}
+											<div class="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-lg">
+												⚠️ Några kupor visar hälsoproblem
+											</div>
+										{/if}
+										{#if summary.hasPlannedActions}
+											<div class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-lg">
+												📋 Actions planned for next visit
+											</div>
+										{/if}
+									</div>
 								</div>
 							{/if}
 						{/if}
@@ -270,7 +316,7 @@
 						{#if getAudioSrc(session)}
 							<div class="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
 								<div class="flex items-center justify-between mb-2">
-									<h4 class="text-sm font-medium text-gray-700">Audio Recording</h4>
+									<h4 class="text-sm font-medium text-gray-700">Ljudinspelning</h4>
 									<button
 										onclick={() => playAudio(session)}
 										class="text-xs bg-amber-600 text-white px-3 py-1.5 rounded-lg font-medium active:scale-95 transition-all duration-200 flex items-center gap-1"
@@ -292,7 +338,7 @@
 						<!-- Notes -->
 						{#if session.notes}
 							<div class="p-3 bg-amber-50 rounded-lg border border-amber-200 mb-3">
-								<h4 class="text-sm font-medium text-amber-900 mb-1">Session Notes:</h4>
+								<h4 class="text-sm font-medium text-amber-900 mb-1">Sessionsanteckningar:</h4>
 								<p class="text-sm text-amber-800">{session.notes}</p>
 							</div>
 						{/if}

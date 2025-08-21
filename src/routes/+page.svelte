@@ -1,29 +1,24 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { activeSession, hives, sessions } from '$lib/stores.js';
+	import {
+		activeSession,
+		hives,
+		sessions,
+		getActiveSession,
+		getHives,
+		getSessions
+	} from '$lib/stores.svelte.js';
 	import type { Hive } from '$lib/types.js';
 
-	let isActiveSession = $state(false);
-	let availableHives = $state<Hive[]>([]);
-	let sessionCount = $state(0);
+	let isActiveSession = $derived(getActiveSession() !== null);
+	let availableHives = $derived(hives.getActiveHives(getHives()));
+	let sessionCount = $derived(getSessions().length);
 
 	onMount(() => {
 		activeSession.load();
 		hives.load();
 		sessions.load();
-	});
-
-	$effect(() => {
-		isActiveSession = $activeSession !== null;
-	});
-
-	$effect(() => {
-		availableHives = hives.getActiveHives($hives);
-	});
-
-	$effect(() => {
-		sessionCount = $sessions.length;
 	});
 
 	function startRecordingSession() {
@@ -44,7 +39,7 @@
 	<div class="px-4 pt-8 pb-6 text-center">
 		<div class="text-5xl mb-3 text-amber-600">🐝</div>
 		<h1 class="text-2xl font-bold text-gray-900 mb-1">BeeKeep</h1>
-		<p class="text-sm text-gray-600">Hive Inspection Sessions</p>
+		<p class="text-sm text-gray-600">Kupinspektionssessioner</p>
 	</div>
 
 	<!-- Main action area -->
@@ -58,14 +53,14 @@
 					>
 						<div class="text-2xl text-green-600 animate-pulse">●</div>
 					</div>
-					<h2 class="text-xl font-bold text-gray-900 mb-2">Session Active</h2>
-					<p class="text-gray-600 text-sm mb-6">Recording in progress</p>
+					<h2 class="text-xl font-bold text-gray-900 mb-2">Session Aktiv</h2>
+					<p class="text-gray-600 text-sm mb-6">Inspelning pågår</p>
 					<div class="space-y-3">
 						<button
 							onclick={() => goto('/session')}
 							class="w-full bg-green-600 text-white font-semibold py-4 px-6 rounded-xl active:scale-95 transition-all duration-200"
 						>
-							Continue Recording
+							Fortsätt Inspelning
 						</button>
 						<button
 							onclick={() => {
@@ -74,7 +69,7 @@
 							}}
 							class="w-full border border-red-300 text-red-600 font-medium py-2 px-6 rounded-xl active:scale-95 transition-all duration-200 text-sm"
 						>
-							Cancel Session
+							Avbryt Session
 						</button>
 					</div>
 				</div>
@@ -88,13 +83,13 @@
 					>
 						<div class="text-2xl text-red-600">●</div>
 					</div>
-					<h2 class="text-xl font-bold text-gray-900 mb-2">Start Recording</h2>
-					<p class="text-gray-600 text-sm mb-6">Begin hive inspection</p>
+					<h2 class="text-xl font-bold text-gray-900 mb-2">Starta Inspelning</h2>
+					<p class="text-gray-600 text-sm mb-6">Börja kupinspektion</p>
 					<button
 						onclick={startRecordingSession}
 						class="w-full bg-red-600 text-white font-semibold py-4 px-6 rounded-xl active:scale-95 transition-all duration-200"
 					>
-						Start Recording
+						Starta Inspelning
 					</button>
 				</div>
 			</div>
@@ -106,11 +101,11 @@
 				<div class="grid grid-cols-2 gap-4">
 					<div class="text-center">
 						<div class="text-2xl font-bold text-gray-900">{availableHives.length}</div>
-						<div class="text-sm text-gray-600">Active Hives</div>
+						<div class="text-sm text-gray-600">Aktiva Kupor</div>
 					</div>
 					<div class="text-center">
 						<div class="text-2xl font-bold text-gray-900">{sessionCount}</div>
-						<div class="text-sm text-gray-600">Sessions</div>
+						<div class="text-sm text-gray-600">Sessioner</div>
 					</div>
 				</div>
 			</div>
@@ -123,14 +118,14 @@
 				class="bg-white rounded-xl border p-4 text-center active:scale-95 transition-all duration-200"
 			>
 				<div class="text-lg mb-1">▢</div>
-				<div class="text-sm font-medium text-gray-900">Manage Hives</div>
+				<div class="text-sm font-medium text-gray-900">Hantera Kupor</div>
 			</a>
 			<a
 				href="/sessions"
 				class="bg-white rounded-xl border p-4 text-center active:scale-95 transition-all duration-200"
 			>
 				<div class="text-lg mb-1">≡</div>
-				<div class="text-sm font-medium text-gray-900">View Sessions</div>
+				<div class="text-sm font-medium text-gray-900">Visa Sessioner</div>
 			</a>
 		</div>
 	</div>

@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { hives, inspections } from '$lib/stores.js';
+	import { hives, inspections, getHives, getInspections } from '$lib/stores.svelte.js';
 	import type { Hive, HiveInspection } from '$lib/types.js';
 
-	let availableHives = $state<Hive[]>([]);
+	let availableHives = $derived(hives.getActiveHives(getHives()));
 	let showAddForm = $state(false);
 	let editingHive = $state<Hive | null>(null);
 
@@ -30,13 +30,9 @@
 		inspections.load();
 	});
 
-	$effect(() => {
-		availableHives = hives.getActiveHives($hives);
-	});
-
 	function getLatestInspection(hive: Hive): HiveInspection | null {
 		// Use the hive's latestInspection field if available, fallback to inspections store
-		return hive.latestInspection || inspections.getLatestByHiveId($inspections, hive.id);
+		return hive.latestInspection || inspections.getLatestByHiveId(getInspections(), hive.id);
 	}
 
 	function formatDate(timestamp: string): string {
@@ -44,9 +40,9 @@
 		const now = new Date();
 		const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
 
-		if (diffDays === 0) return 'Today';
-		if (diffDays === 1) return 'Yesterday';
-		if (diffDays < 7) return `${diffDays} days ago`;
+		if (diffDays === 0) return 'Idag';
+		if (diffDays === 1) return 'Igår';
+		if (diffDays < 7) return `${diffDays} dagar sedan`;
 
 		return date.toLocaleDateString('sv-SE', { month: 'short', day: 'numeric' });
 	}
@@ -126,7 +122,7 @@
 	}
 
 	function formatDateAdded(dateString: string): string {
-		return new Date(dateString).toLocaleDateString('en-US', {
+		return new Date(dateString).toLocaleDateString('sv-SE', {
 			month: 'short',
 			day: 'numeric'
 		});
@@ -139,14 +135,14 @@
 	<div class="bg-white border-b px-4 py-3">
 		<div class="flex items-center justify-between">
 			<div>
-				<h1 class="text-xl font-bold text-gray-900">Hives</h1>
-				<p class="text-sm text-gray-600">{availableHives.length} active</p>
+				<h1 class="text-xl font-bold text-gray-900">Kupor</h1>
+				<p class="text-sm text-gray-600">{availableHives.length} aktiva</p>
 			</div>
 			<button
 				onclick={openAddForm}
 				class="bg-amber-600 text-white px-4 py-2 rounded-lg font-medium active:scale-95 transition-all duration-200 shadow-sm"
 			>
-				+ Add
+				+ Lägg till
 			</button>
 		</div>
 	</div>
@@ -156,13 +152,13 @@
 		{#if availableHives.length === 0}
 			<div class="text-center py-12">
 				<div class="text-4xl mb-4 text-gray-400">▢</div>
-				<h2 class="text-lg font-semibold text-gray-900 mb-2">No Hives Yet</h2>
-				<p class="text-sm text-gray-600 mb-6">Add your first hive to start tracking</p>
+				<h2 class="text-lg font-semibold text-gray-900 mb-2">Inga Kupor Än</h2>
+				<p class="text-sm text-gray-600 mb-6">Lägg till din första kupa för att börja spåra</p>
 				<button
 					onclick={openAddForm}
 					class="bg-amber-600 text-white px-6 py-3 rounded-xl font-medium active:scale-95 transition-all duration-200"
 				>
-					Add Your First Hive
+					Lägg till Din Första Kupa
 				</button>
 			</div>
 		{:else}
@@ -190,7 +186,7 @@
 											{hive.notes}
 										</div>
 									{/if}
-									<p class="text-xs text-gray-500">Added {formatDateAdded(hive.dateAdded)}</p>
+									<p class="text-xs text-gray-500">Tillagd {formatDateAdded(hive.dateAdded)}</p>
 								</div>
 							</div>
 
@@ -223,7 +219,7 @@
 						{#if latestInspection}
 							<div class="border-t border-gray-100 pt-3 mt-3">
 								<div class="flex items-center justify-between mb-2">
-									<span class="text-xs font-medium text-gray-600">Latest Status</span>
+									<span class="text-xs font-medium text-gray-600">Senaste Status</span>
 									<div class="flex items-center gap-1">
 										<span class="text-xs text-gray-500"
 											>{formatDate(latestInspection.timestamp)}</span
@@ -287,7 +283,7 @@
 							<div class="border-t border-gray-100 pt-3 mt-3">
 								<div class="text-center">
 									<div class="text-gray-400 text-xs mb-1">📋</div>
-									<span class="text-xs text-gray-500">No inspection data</span>
+									<span class="text-xs text-gray-500">Ingen inspektionsdata</span>
 								</div>
 							</div>
 						{/if}
@@ -312,7 +308,7 @@
 				<!-- Modal header -->
 				<div class="px-4 pb-4 border-b">
 					<h2 class="text-lg font-bold text-center">
-						{editingHive ? 'Edit Hive' : 'Add New Hive'}
+						{editingHive ? 'Redigera Kupa' : 'Lägg till Ny Kupa'}
 					</h2>
 				</div>
 
@@ -321,29 +317,29 @@
 					<div class="space-y-4">
 						<!-- Name -->
 						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2"> Hive Name * </label>
+							<label class="block text-sm font-medium text-gray-700 mb-2"> Kupnamn * </label>
 							<input
 								type="text"
 								bind:value={formName}
-								placeholder="Main Hive, North Hive..."
+								placeholder="Huvudkupa, Norra kupan..."
 								class="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl focus:bg-white focus:ring-2 focus:ring-amber-500"
 							/>
 						</div>
 
 						<!-- Location -->
 						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2"> Location </label>
+							<label class="block text-sm font-medium text-gray-700 mb-2"> Plats </label>
 							<input
 								type="text"
 								bind:value={formLocation}
-								placeholder="Backyard, Garden..."
+								placeholder="Bakgård, Trädgård..."
 								class="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl focus:bg-white focus:ring-2 focus:ring-amber-500"
 							/>
 						</div>
 
 						<!-- Color -->
 						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2"> Color </label>
+							<label class="block text-sm font-medium text-gray-700 mb-2"> Färg </label>
 							<div class="grid grid-cols-8 gap-3">
 								{#each hiveColors as color}
 									<button
@@ -361,10 +357,10 @@
 
 						<!-- Notes -->
 						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2"> Notes </label>
+							<label class="block text-sm font-medium text-gray-700 mb-2"> Anteckningar </label>
 							<textarea
 								bind:value={formNotes}
-								placeholder="Additional notes about this hive..."
+								placeholder="Ytterligare anteckningar om denna kupa..."
 								rows="3"
 								class="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl focus:bg-white focus:ring-2 focus:ring-amber-500 resize-none"
 							></textarea>
@@ -379,14 +375,14 @@
 							onclick={resetForm}
 							class="flex-1 py-3 px-4 border border-gray-300 text-gray-700 rounded-xl font-medium active:scale-95 transition-all duration-200"
 						>
-							Cancel
+							Avbryt
 						</button>
 						<button
 							onclick={saveHive}
 							disabled={!formName.trim()}
 							class="flex-1 py-3 px-4 bg-amber-600 text-white rounded-xl font-medium active:scale-95 transition-all duration-200 disabled:opacity-50"
 						>
-							{editingHive ? 'Update' : 'Add'} Hive
+							{editingHive ? 'Uppdatera' : 'Lägg till'} Kupa
 						</button>
 					</div>
 				</div>

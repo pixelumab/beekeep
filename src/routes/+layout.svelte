@@ -6,9 +6,9 @@
 	let { children } = $props();
 
 	const navigationTabs: NavigationTab[] = [
-		{ id: 'record', label: 'Record', icon: '●', path: '/' },
-		{ id: 'sessions', label: 'Sessions', icon: '≡', path: '/sessions' },
-		{ id: 'hives', label: 'Hives', icon: '▢', path: '/hives' }
+		{ id: 'record', label: 'Spela in', icon: '●', path: '/' },
+		{ id: 'sessions', label: 'Sessioner', icon: '≡', path: '/sessions' },
+		{ id: 'hives', label: 'Kupor', icon: '▢', path: '/hives' }
 	];
 
 	let currentPath = $derived($page.url.pathname);
@@ -17,7 +17,7 @@
 <svelte:head>
 	<link rel="icon" href={favicon} />
 	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-	<title>BeeKeep - Beehive Management</title>
+	<title>BeeKeep - Kuphantering</title>
 	<script src="https://cdn.tailwindcss.com"></script>
 	<style>
 		/* Mobile-first CSS variables */

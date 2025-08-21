@@ -1,14 +1,19 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { activeSession, sessions, hives, inspections } from '$lib/stores.js';
+	import {
+		activeSession,
+		sessions,
+		hives,
+		inspections,
+		getActiveSession,
+		getHives
+	} from '$lib/stores.svelte.js';
 	import type { InspectionSession, Hive, BeekeepingInspectionResult } from '$lib/types.js';
 	import { transcribeAndAnalyze } from '$lib/services/openai.js';
 
-	let session: InspectionSession | null = $state(null);
-	let availableHives = $state<Hive[]>([]);
-	let selectedHiveId = $state<string | null>(null);
-	let sessionNotes = $state('');
+	let session = $derived(getActiveSession());
+	let availableHives = $derived(hives.getActiveHives(getHives()));
 
 	// Audio recording state
 	let mediaRecorder: MediaRecorder | null = $state(null);
@@ -34,7 +39,6 @@
 		activeSession.load();
 		hives.load();
 		inspections.load();
-		session = $activeSession;
 
 		if (!session) {
 			goto('/');
@@ -43,18 +47,6 @@
 
 		// Check microphone support and start recording
 		checkMicrophoneSupport();
-	});
-
-	$effect(() => {
-		session = $activeSession;
-	});
-
-	$effect(() => {
-		availableHives = hives.getActiveHives($hives);
-		// Auto-select first hive if none selected and hives available
-		if (!selectedHiveId && availableHives.length > 0) {
-			selectedHiveId = availableHives[0].id;
-		}
 	});
 
 	function checkMicrophoneSupport() {
@@ -162,9 +154,9 @@
 				...session,
 				endTime: new Date().toISOString(),
 				duration: recordingDuration,
-				hiveId: selectedHiveId || undefined,
-				hiveName: selectedHiveId ? getHiveName(selectedHiveId) : undefined,
-				notes: sessionNotes.trim() || undefined,
+				hiveId: undefined,
+				hiveName: undefined,
+				notes: undefined,
 				audioUrl: recordedAudio || undefined, // Keep for current session playback
 				audioBlob: audioBlob || undefined, // Store for persistent playback
 				transcription: transcriptionResult || undefined,
@@ -181,11 +173,6 @@
 		}
 
 		goto('/');
-	}
-
-	function getHiveName(hiveId: string): string {
-		const hive = hives.getById(availableHives, hiveId);
-		return hive?.name || 'Unknown Hive';
 	}
 
 	// Helper function to match bikupa identifier to existing hives (copied from stores)
@@ -334,14 +321,14 @@
 			<div
 				class="animate-spin rounded-full h-12 w-12 border-2 border-amber-400 border-t-transparent mb-6"
 			></div>
-			<h2 class="text-xl font-bold mb-2">Setting Up Recording</h2>
-			<p class="text-gray-300 mb-4">Requesting microphone access...</p>
-			<p class="text-gray-400 text-sm mb-6">Check for a permission prompt</p>
+			<h2 class="text-xl font-bold mb-2">Förbereder Inspelning</h2>
+			<p class="text-gray-300 mb-4">Begär mikrofonråtkomst...</p>
+			<p class="text-gray-400 text-sm mb-6">Kontrollera efter en rättighetsprompt</p>
 			<button
 				onclick={() => (permissionStatus = 'denied')}
 				class="text-gray-400 text-sm active:text-white transition-colors"
 			>
-				Cancel Setup
+				Avbryt Installation
 			</button>
 		</div>
 	{:else if permissionStatus === 'denied'}
@@ -350,23 +337,23 @@
 			<div class="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-6">
 				<div class="text-2xl">●</div>
 			</div>
-			<h2 class="text-xl font-bold mb-2">Microphone Access Required</h2>
+			<h2 class="text-xl font-bold mb-2">Mikrofonråtkomst Krävs</h2>
 			<p class="text-gray-300 mb-6 text-sm">
-				Please allow microphone access to record your hive inspection session
+				Vänligen tillåt mikrofonråtkomst för att spela in din kupinspektionssession
 			</p>
 			<button
 				onclick={requestMicrophoneAccess}
 				class="bg-amber-600 text-white py-3 px-6 rounded-xl font-medium active:scale-95 transition-all duration-200"
 			>
-				Try Again
+				Försök Igen
 			</button>
 		</div>
 	{:else if permissionStatus === 'unsupported'}
 		<div class="flex flex-col items-center justify-center min-h-full px-4 text-center">
 			<div class="text-4xl mb-4">❌</div>
-			<h2 class="text-xl font-bold mb-2">Recording Not Available</h2>
+			<h2 class="text-xl font-bold mb-2">Inspelning Inte Tillgänglig</h2>
 			<p class="text-gray-300 mb-6 text-sm">
-				Audio recording requires a modern browser with microphone support.
+				Ljudinspelning kräver en modern webbläsare med mikrofonstöd.
 			</p>
 			<button
 				onclick={() => {
@@ -375,7 +362,7 @@
 				}}
 				class="bg-gray-600 text-white py-3 px-6 rounded-xl font-medium active:scale-95 transition-all duration-200"
 			>
-				Go Back
+				Gå Tillbaka
 			</button>
 		</div>
 	{:else}
@@ -385,9 +372,9 @@
 			<div class="px-4 py-4 border-b border-gray-700">
 				<div class="flex items-center justify-between">
 					<div>
-						<h1 class="text-lg font-bold">Recording Session</h1>
+						<h1 class="text-lg font-bold">Inspelningssession</h1>
 						<p class="text-sm text-gray-300">
-							{new Date().toLocaleDateString('en-US', {
+							{new Date().toLocaleDateString('sv-SE', {
 								month: 'short',
 								day: 'numeric'
 							})}
@@ -397,7 +384,7 @@
 						onclick={endSession}
 						class="px-3 py-1.5 bg-red-600/20 border border-red-600 text-red-400 rounded-lg active:bg-red-600/30 transition-colors text-sm font-medium"
 					>
-						End Session
+						Avsluta Session
 					</button>
 				</div>
 			</div>
@@ -412,7 +399,7 @@
 						>
 							<div class="text-3xl text-green-500 animate-pulse">●</div>
 						</div>
-						<h2 class="text-2xl font-bold mb-2">Recording</h2>
+						<h2 class="text-2xl font-bold mb-2">Spelar in</h2>
 						<p class="text-3xl font-mono text-amber-400 mb-6">
 							{formatRecordingDuration(recordingDuration)}
 						</p>
@@ -420,7 +407,7 @@
 							onclick={stopRecording}
 							class="w-full max-w-xs bg-red-600 text-white py-4 px-6 rounded-xl font-medium active:scale-95 transition-all duration-200"
 						>
-							■ Stop Recording
+							■ Stoppa Inspelning
 						</button>
 					</div>
 				{:else if recordedAudio}
@@ -431,7 +418,7 @@
 						>
 							<div class="text-3xl text-green-500">✓</div>
 						</div>
-						<h2 class="text-2xl font-bold mb-2">Recording Complete</h2>
+						<h2 class="text-2xl font-bold mb-2">Inspelning Klar</h2>
 						<p class="text-xl text-amber-400 mb-6">{formatRecordingDuration(recordingDuration)}</p>
 
 						<!-- Audio playback following MDN pattern -->
@@ -450,9 +437,9 @@
 								{#if inspectionData.length > 0}
 									<div class="border-t border-gray-700 pt-3 space-y-3">
 										<h4 class="text-sm font-medium text-green-400 mb-2">
-											Extracted Data ({inspectionData.length} hive{inspectionData.length > 1
-												? 's'
-												: ''})
+											Extraherad Data ({inspectionData.length} kup{inspectionData.length > 1
+												? 'or'
+												: 'a'})
 										</h4>
 
 										<!-- Assignment Preview Summary -->
@@ -462,20 +449,20 @@
 													<span class="text-green-400">✓</span>
 													{inspectionData.filter((hive) =>
 														findMatchingHive(hive.bikupa, availableHives)
-													).length} auto-matched
+													).length} auto-matchade
 												</span>
 												<span class="flex items-center gap-1">
 													<span class="text-orange-400">!</span>
 													{inspectionData.filter(
 														(hive) => !findMatchingHive(hive.bikupa, availableHives)
-													).length} need manual assignment
+													).length} behöver manuell tilldelning
 												</span>
 											</div>
 										{:else}
 											<div class="text-xs text-gray-400 mb-3">
 												<span class="flex items-center gap-1">
 													<span class="text-green-400">✓</span>
-													All {inspectionData.length} hive{inspectionData.length > 1 ? 's' : ''} auto-matched
+													Alla {inspectionData.length} kup{inspectionData.length > 1 ? 'or' : 'a'} auto-matchade
 												</span>
 											</div>
 										{/if}
@@ -485,9 +472,9 @@
 												<div class="flex items-center gap-2 mb-2">
 													<span class="text-green-400 text-sm">✓</span>
 													<span class="text-green-400 text-sm font-medium">
-														Saved to {savedInspections.length} hive{savedInspections.length > 1
-															? 's'
-															: ''}:
+														Sparad till {savedInspections.length} kup{savedInspections.length > 1
+															? 'or'
+															: 'a'}:
 													</span>
 												</div>
 												<div class="space-y-2">
@@ -500,7 +487,7 @@
 																onclick={() => goto(`/hives/${savedHiveIds[index]}?from=session`)}
 																class="text-xs bg-green-600 text-white px-2 py-1 rounded active:scale-95 transition-transform"
 															>
-																View
+																Visa
 															</button>
 														</div>
 													{/each}
@@ -508,7 +495,7 @@
 														onclick={() => goto('/hives')}
 														class="w-full text-xs bg-green-700 text-white py-2 px-3 rounded-lg active:scale-95 transition-transform mt-2"
 													>
-														View All Hives
+														Visa Alla Kupor
 													</button>
 												</div>
 											</div>
@@ -532,7 +519,7 @@
 														</span>
 													{:else}
 														<span class="text-xs bg-red-600/30 text-red-300 px-2 py-1 rounded-full">
-															No match
+															Ingen matchning
 														</span>
 													{/if}
 												</div>
@@ -573,6 +560,97 @@
 													</div>
 												{/if}
 
+												{#if hiveData.yngelstatus}
+													<div class="text-xs">
+														<span class="text-gray-400">Yngelstatus:</span>
+														<span class="text-white ml-1 {hiveData.yngelstatus <= 2 ? 'text-red-300' : hiveData.yngelstatus === 3 ? 'text-yellow-300' : 'text-green-300'}">{hiveData.yngelstatus}/5</span>
+													</div>
+												{/if}
+
+												{#if hiveData.foder}
+													<div class="text-xs">
+														<span class="text-gray-400">Foder:</span>
+														<span class="text-white ml-1 {hiveData.foder <= 2 ? 'text-red-300' : hiveData.foder === 3 ? 'text-yellow-300' : 'text-green-300'}">{hiveData.foder}/5</span>
+													</div>
+												{/if}
+
+												{#if hiveData.svärmningsrisk}
+													<div class="text-xs">
+														<span class="text-gray-400">Svärmningsrisk:</span>
+														<span class="text-white ml-1 {hiveData.svärmningsrisk >= 4 ? 'text-red-300' : hiveData.svärmningsrisk === 3 ? 'text-yellow-300' : 'text-green-300'}">{hiveData.svärmningsrisk}/5</span>
+													</div>
+												{/if}
+
+												{#if hiveData.aktivitetVidFlustret}
+													<div class="text-xs">
+														<span class="text-gray-400">Aktivitet vid flustret:</span>
+														<span class="text-white ml-1">{hiveData.aktivitetVidFlustret}/5</span>
+													</div>
+												{/if}
+
+												{#if hiveData.aggressivitet}
+													<div class="text-xs">
+														<span class="text-gray-400">Aggressivitet:</span>
+														<span class="text-white ml-1 {hiveData.aggressivitet >= 4 ? 'text-red-300' : hiveData.aggressivitet === 3 ? 'text-yellow-300' : 'text-green-300'}">{hiveData.aggressivitet}/5</span>
+													</div>
+												{/if}
+
+												{#if hiveData.väder}
+													<div class="text-xs">
+														<span class="text-gray-400">Väder:</span>
+														<span class="text-white ml-1">{hiveData.väder}</span>
+													</div>
+												{/if}
+
+												{#if hiveData.växtDragförhållanden}
+													<div class="text-xs">
+														<span class="text-gray-400">Växt/dragförhållanden:</span>
+														<span class="text-white ml-1">{hiveData.växtDragförhållanden}</span>
+													</div>
+												{/if}
+
+												{#if hiveData.fuktMögel}
+													<div class="text-xs">
+														<span class="text-gray-400">Fukt/mögel:</span>
+														<span class="text-white ml-1 capitalize {hiveData.fuktMögel === 'ja' ? 'text-red-300' : 'text-green-300'}">{hiveData.fuktMögel}</span>
+													</div>
+												{/if}
+
+												{#if hiveData.varroastatus}
+													<div class="text-xs">
+														<span class="text-gray-400">Varroa status:</span>
+														<span class="text-white ml-1 {hiveData.varroastatus >= 4 ? 'text-red-300' : hiveData.varroastatus === 3 ? 'text-yellow-300' : 'text-green-300'}">{hiveData.varroastatus}/5</span>
+													</div>
+												{/if}
+
+												{#if hiveData.kupansSkick}
+													<div class="text-xs">
+														<span class="text-gray-400">Kupans skick:</span>
+														<span class="text-white ml-1 {hiveData.kupansSkick <= 2 ? 'text-red-300' : hiveData.kupansSkick === 3 ? 'text-yellow-300' : 'text-green-300'}">{hiveData.kupansSkick}/5</span>
+													</div>
+												{/if}
+
+												{#if hiveData.antalSkattlådar !== undefined}
+													<div class="text-xs">
+														<span class="text-gray-400">Antal skattlådor:</span>
+														<span class="text-white ml-1">{hiveData.antalSkattlådar}</span>
+													</div>
+												{/if}
+
+												{#if hiveData.skattlådorFulla}
+													<div class="text-xs">
+														<span class="text-gray-400">Skattlådor fulla:</span>
+														<span class="text-white ml-1 capitalize">{hiveData.skattlådorFulla}</span>
+													</div>
+												{/if}
+
+												{#if hiveData.planeradÅtgärd}
+													<div class="text-xs">
+														<span class="text-gray-400">Planerad åtgärd:</span>
+														<span class="text-white ml-1">{hiveData.planeradÅtgärd}</span>
+													</div>
+												{/if}
+
 												{#if hiveData.extractionConfidence}
 													<div class="text-xs text-gray-500">
 														Confidence: {Math.round(hiveData.extractionConfidence * 100)}%
@@ -583,16 +661,16 @@
 									</div>
 								{/if}
 
-								<!-- Unmatched Data Section -->
+								<!-- Omatchade Data Section -->
 								{#if unmatchedData.length > 0}
 									<div class="border-t border-gray-700 pt-3 space-y-3">
 										<h4 class="text-sm font-medium text-orange-400 mb-2">
-											Unmatched Data ({unmatchedData.length} hive{unmatchedData.length > 1
-												? 's'
-												: ''})
+											Omatchade Data ({unmatchedData.length} kup{unmatchedData.length > 1
+												? 'or'
+												: 'a'})
 										</h4>
 										<p class="text-xs text-orange-300 mb-3">
-											These hives couldn't be automatically matched. Please assign them manually:
+											Dessa kupor kunde inte matchas automatiskt. Vänligen tilldela dem manuellt:
 										</p>
 
 										{#each unmatchedData as unmatched, index}
@@ -601,7 +679,7 @@
 											>
 												<div class="flex items-center justify-between">
 													<div class="text-xs font-medium text-orange-400">
-														Unmatched Hive {index + 1}
+														Omatchad Kupa {index + 1}
 														{#if unmatched.bikupa}
 															- {unmatched.bikupa}
 														{/if}
@@ -645,6 +723,97 @@
 													</div>
 												{/if}
 
+												{#if unmatched.yngelstatus}
+													<div class="text-xs">
+														<span class="text-gray-400">Yngelstatus:</span>
+														<span class="text-white ml-1 {unmatched.yngelstatus <= 2 ? 'text-red-300' : unmatched.yngelstatus === 3 ? 'text-yellow-300' : 'text-green-300'}">{unmatched.yngelstatus}/5</span>
+													</div>
+												{/if}
+
+												{#if unmatched.foder}
+													<div class="text-xs">
+														<span class="text-gray-400">Foder:</span>
+														<span class="text-white ml-1 {unmatched.foder <= 2 ? 'text-red-300' : unmatched.foder === 3 ? 'text-yellow-300' : 'text-green-300'}">{unmatched.foder}/5</span>
+													</div>
+												{/if}
+
+												{#if unmatched.svärmningsrisk}
+													<div class="text-xs">
+														<span class="text-gray-400">Svärmningsrisk:</span>
+														<span class="text-white ml-1 {unmatched.svärmningsrisk >= 4 ? 'text-red-300' : unmatched.svärmningsrisk === 3 ? 'text-yellow-300' : 'text-green-300'}">{unmatched.svärmningsrisk}/5</span>
+													</div>
+												{/if}
+
+												{#if unmatched.aktivitetVidFlustret}
+													<div class="text-xs">
+														<span class="text-gray-400">Aktivitet vid flustret:</span>
+														<span class="text-white ml-1">{unmatched.aktivitetVidFlustret}/5</span>
+													</div>
+												{/if}
+
+												{#if unmatched.aggressivitet}
+													<div class="text-xs">
+														<span class="text-gray-400">Aggressivitet:</span>
+														<span class="text-white ml-1 {unmatched.aggressivitet >= 4 ? 'text-red-300' : unmatched.aggressivitet === 3 ? 'text-yellow-300' : 'text-green-300'}">{unmatched.aggressivitet}/5</span>
+													</div>
+												{/if}
+
+												{#if unmatched.väder}
+													<div class="text-xs">
+														<span class="text-gray-400">Väder:</span>
+														<span class="text-white ml-1">{unmatched.väder}</span>
+													</div>
+												{/if}
+
+												{#if unmatched.växtDragförhållanden}
+													<div class="text-xs">
+														<span class="text-gray-400">Växt/dragförhållanden:</span>
+														<span class="text-white ml-1">{unmatched.växtDragförhållanden}</span>
+													</div>
+												{/if}
+
+												{#if unmatched.fuktMögel}
+													<div class="text-xs">
+														<span class="text-gray-400">Fukt/mögel:</span>
+														<span class="text-white ml-1 capitalize {unmatched.fuktMögel === 'ja' ? 'text-red-300' : 'text-green-300'}">{unmatched.fuktMögel}</span>
+													</div>
+												{/if}
+
+												{#if unmatched.varroastatus}
+													<div class="text-xs">
+														<span class="text-gray-400">Varroa status:</span>
+														<span class="text-white ml-1 {unmatched.varroastatus >= 4 ? 'text-red-300' : unmatched.varroastatus === 3 ? 'text-yellow-300' : 'text-green-300'}">{unmatched.varroastatus}/5</span>
+													</div>
+												{/if}
+
+												{#if unmatched.kupansSkick}
+													<div class="text-xs">
+														<span class="text-gray-400">Kupans skick:</span>
+														<span class="text-white ml-1 {unmatched.kupansSkick <= 2 ? 'text-red-300' : unmatched.kupansSkick === 3 ? 'text-yellow-300' : 'text-green-300'}">{unmatched.kupansSkick}/5</span>
+													</div>
+												{/if}
+
+												{#if unmatched.antalSkattlådar !== undefined}
+													<div class="text-xs">
+														<span class="text-gray-400">Antal skattlådor:</span>
+														<span class="text-white ml-1">{unmatched.antalSkattlådar}</span>
+													</div>
+												{/if}
+
+												{#if unmatched.skattlådorFulla}
+													<div class="text-xs">
+														<span class="text-gray-400">Skattlådor fulla:</span>
+														<span class="text-white ml-1 capitalize">{unmatched.skattlådorFulla}</span>
+													</div>
+												{/if}
+
+												{#if unmatched.planeradÅtgärd}
+													<div class="text-xs">
+														<span class="text-gray-400">Planerad åtgärd:</span>
+														<span class="text-white ml-1">{unmatched.planeradÅtgärd}</span>
+													</div>
+												{/if}
+
 												{#if unmatched.extractionConfidence}
 													<div class="text-xs text-gray-500">
 														Confidence: {Math.round(unmatched.extractionConfidence * 100)}%
@@ -653,12 +822,14 @@
 
 												<!-- Hive Selection Dropdown -->
 												<div class="border-t border-orange-700 pt-2">
-													<label class="block text-xs text-orange-300 mb-1">Assign to hive:</label>
+													<label class="block text-xs text-orange-300 mb-1"
+														>Tilldela till kupa:</label
+													>
 													<select
 														bind:value={manualAssignments[index]}
 														class="w-full px-2 py-1 bg-gray-800 border border-orange-600 text-white text-xs rounded focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
 													>
-														<option value="">Select a hive...</option>
+														<option value="">Välj en kupa...</option>
 														{#each availableHives as hive}
 															<option value={hive.id}>{hive.name}</option>
 														{/each}
@@ -672,7 +843,7 @@
 												onclick={processManualAssignments}
 												class="w-full text-xs bg-orange-600 text-white py-2 px-3 rounded-lg active:scale-95 transition-transform mt-2"
 											>
-												Save Manual Assignments
+												Spara Manuella Tilldelningar
 											</button>
 										{/if}
 									</div>
@@ -683,14 +854,14 @@
 								<div
 									class="animate-spin rounded-full h-6 w-6 border-2 border-amber-400 border-t-transparent mx-auto mb-2"
 								></div>
-								<p class="text-sm text-amber-400">Transcribing audio...</p>
+								<p class="text-sm text-amber-400">Transkriberar ljud...</p>
 							</div>
 						{:else}
 							<button
 								onclick={handleTranscription}
 								class="w-full max-w-xs bg-blue-600 text-white py-3 px-6 rounded-xl font-medium active:scale-95 transition-all duration-200 mb-3"
 							>
-								Transcribe & Analyze
+								Transkribera & Analysera
 							</button>
 						{/if}
 
@@ -704,7 +875,7 @@
 							onclick={startRecording}
 							class="w-full max-w-xs bg-amber-600 text-white py-3 px-6 rounded-xl font-medium active:scale-95 transition-all duration-200 mb-3"
 						>
-							Record Again
+							Spela in Igen
 						</button>
 					</div>
 				{:else}
@@ -713,46 +884,16 @@
 						<div class="w-24 h-24 bg-gray-600 rounded-full flex items-center justify-center mb-6">
 							<div class="text-3xl">●</div>
 						</div>
-						<h2 class="text-2xl font-bold mb-2">Ready to Record</h2>
-						<p class="text-gray-300 mb-6 text-sm">Microphone is ready</p>
+						<h2 class="text-2xl font-bold mb-2">Redo att Spela in</h2>
+						<p class="text-gray-300 mb-6 text-sm">Mikrofonen är redo</p>
 						<button
 							onclick={startRecording}
 							class="w-full max-w-xs bg-red-600 text-white py-4 px-6 rounded-xl font-medium active:scale-95 transition-all duration-200"
 						>
-							● Start Recording
+							● Starta Inspelning
 						</button>
 					</div>
 				{/if}
-			</div>
-
-			<!-- Session details -->
-			<div class="px-4 py-4 border-t border-gray-700 space-y-4">
-				<!-- Hive selection -->
-				{#if availableHives.length > 0}
-					<div>
-						<label class="block text-sm font-medium text-gray-300 mb-2">Select Hive</label>
-						<select
-							bind:value={selectedHiveId}
-							class="w-full px-3 py-3 bg-gray-800 border border-gray-600 text-white rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-						>
-							<option value={null}>Choose a hive...</option>
-							{#each availableHives as hive}
-								<option value={hive.id}>{hive.name}</option>
-							{/each}
-						</select>
-					</div>
-				{/if}
-
-				<!-- Session notes -->
-				<div>
-					<label class="block text-sm font-medium text-gray-300 mb-2">Session Notes</label>
-					<textarea
-						bind:value={sessionNotes}
-						placeholder="Add notes about this inspection..."
-						rows="3"
-						class="w-full px-3 py-3 bg-gray-800 border border-gray-600 text-white rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 resize-none placeholder-gray-500"
-					></textarea>
-				</div>
 			</div>
 		</div>
 	{/if}

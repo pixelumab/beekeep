@@ -2,124 +2,39 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import { hives, inspections } from '$lib/stores.js';
+	import { hives, inspections, getHives, getInspections } from '$lib/stores.svelte.js';
 	import type { Hive, HiveInspection } from '$lib/types.js';
 
-	let hive = $state<Hive | null>(null);
-	let hiveInspections = $state<HiveInspection[]>([]);
-	let latestInspection = $state<HiveInspection | null>(null);
-	let isEditing = $state(false);
-	let showSaveSuccess = $state(false);
+	// Core state
 	let fromSession = $state(false);
+	let dataLoaded = $state(false);
 
-	// Edit form state
-	let editFinnsDrottning = $state<'ja' | 'nej' | ''>('');
-	let editNylagdaÄgg = $state<'ja' | 'nej' | ''>('');
-	let editMängdBin = $state<number | ''>(5);
-	let editBinasHälsa = $state<number | ''>(5);
-	let editNotes = $state('');
+	// Reactive computed values using $derived
+	let currentHiveId = $derived($page.params.id);
+	let hive = $derived(
+		!dataLoaded || !currentHiveId ? null : getHives().find((h) => h.id === currentHiveId) || null
+	);
+	let hiveInspections = $derived(
+		!dataLoaded || !currentHiveId ? [] : inspections.getByHiveId(getInspections(), currentHiveId)
+	);
+	let latestInspection = $derived(hiveInspections[0] || null);
 
 	onMount(() => {
 		hives.load();
 		inspections.load();
-		loadHiveData();
+		dataLoaded = true;
 
 		// Check if we came from session page
 		const urlParams = new URLSearchParams(window.location.search);
 		fromSession = urlParams.get('from') === 'session';
 	});
 
+	// Effect to handle navigation to non-existent hive
 	$effect(() => {
-		loadHiveData();
-	});
-
-	function loadHiveData() {
-		const hiveId = $page.params.id;
-		if (!hiveId) return;
-
-		// Find the hive
-		const allHives = $hives;
-		hive = allHives.find((h) => h.id === hiveId) || null;
-
-		if (!hive) {
+		if (dataLoaded && currentHiveId && hive === null) {
 			goto('/hives');
-			return;
 		}
-
-		// Load inspections for this hive
-		const allInspections = $inspections;
-		hiveInspections = inspections.getByHiveId(allInspections, hiveId);
-		latestInspection = hiveInspections[0] || null;
-
-		// Set edit form with latest values
-		if (latestInspection) {
-			editFinnsDrottning = latestInspection.finnsDrottning || '';
-			editNylagdaÄgg = latestInspection.nylagdaÄgg || '';
-			editMängdBin = latestInspection.mängdBin || '';
-			editBinasHälsa = latestInspection.binasHälsa || '';
-			editNotes = latestInspection.notes || '';
-		}
-	}
-
-	function startEditing() {
-		isEditing = true;
-	}
-
-	function cancelEditing() {
-		isEditing = false;
-		// Reset form to latest values
-		if (latestInspection) {
-			editFinnsDrottning = latestInspection.finnsDrottning || '';
-			editNylagdaÄgg = latestInspection.nylagdaÄgg || '';
-			editMängdBin = latestInspection.mängdBin || '';
-			editBinasHälsa = latestInspection.binasHälsa || '';
-			editNotes = latestInspection.notes || '';
-		}
-	}
-
-	function saveInspection() {
-		if (!hive) return;
-
-		// Create new manual inspection
-		const newInspection: HiveInspection = {
-			id: crypto.randomUUID(),
-			hiveId: hive.id,
-			hiveName: hive.name,
-			date: new Date().toISOString().split('T')[0],
-			timestamp: new Date().toISOString(),
-			finnsDrottning: editFinnsDrottning || undefined,
-			nylagdaÄgg: editNylagdaÄgg || undefined,
-			mängdBin:
-				typeof editMängdBin === 'number' && editMängdBin >= 1 && editMängdBin <= 5
-					? (editMängdBin as 1 | 2 | 3 | 4 | 5)
-					: undefined,
-			binasHälsa:
-				typeof editBinasHälsa === 'number' && editBinasHälsa >= 1 && editBinasHälsa <= 5
-					? (editBinasHälsa as 1 | 2 | 3 | 4 | 5)
-					: undefined,
-			source: 'manual',
-			editedBy: 'beekeeper',
-			editedAt: new Date().toISOString(),
-			notes: editNotes.trim() || undefined,
-			confirmed: true
-		};
-
-		inspections.add(newInspection);
-
-		// Update hive with latest inspection
-		hives.updateLatestInspection(hive.id, newInspection);
-
-		isEditing = false;
-		showSaveSuccess = true;
-
-		// Hide success message after 3 seconds
-		setTimeout(() => {
-			showSaveSuccess = false;
-		}, 3000);
-
-		// Reload data to show new inspection
-		loadHiveData();
-	}
+	});
 
 	function formatDate(timestamp: string): string {
 		const date = new Date(timestamp);
@@ -175,33 +90,21 @@
 				<div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
 					<div class="flex items-center gap-2 mb-2">
 						<span class="text-blue-600">🎤</span>
-						<span class="text-blue-800 font-medium">Viewed from Recording Session</span>
+						<span class="text-blue-800 font-medium">Visad från Inspelningssession</span>
 					</div>
 					<p class="text-blue-700 text-sm">
-						This hive was recently updated from a transcribed recording. Use the back button to
-						return to your sessions.
-					</p>
-				</div>
-			{/if}
-
-			<!-- Success Message -->
-			{#if showSaveSuccess}
-				<div class="bg-green-50 border border-green-200 rounded-xl p-4">
-					<div class="flex items-center gap-2">
-						<span class="text-green-600">✓</span>
-						<span class="text-green-800 font-medium">Inspection saved successfully!</span>
-					</div>
-					<p class="text-green-700 text-sm mt-1">
-						Hive status has been updated with your inspection data.
+						Denna kupa uppdaterades nyligen från en transkriberad inspelning. Använd
+						tillbaka-knappen för att återgå till dina sessioner.
 					</p>
 				</div>
 			{/if}
 
 			<!-- Latest Status Card -->
 			{#if latestInspection}
+				
 				<div class="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
 					<div class="flex items-center justify-between mb-3">
-						<h2 class="text-lg font-semibold text-gray-900">Latest Status</h2>
+						<h2 class="text-lg font-semibold text-gray-900">Senaste Status</h2>
 						<div class="flex items-center gap-2">
 							<span class="text-xs text-gray-500">
 								{formatDate(latestInspection.timestamp)}
@@ -210,67 +113,305 @@
 								<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">AI</span>
 							{:else}
 								<span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full"
-									>Manual</span
+									>Manuell</span
 								>
 							{/if}
 						</div>
 					</div>
 
-					<div class="grid grid-cols-2 gap-4">
-						{#if latestInspection.finnsDrottning}
-							<div>
-								<span class="text-sm text-gray-600">Drottning:</span>
-								<span
-									class="ml-2 font-medium {getStatusColor(
-										latestInspection.finnsDrottning
-									)} capitalize"
-								>
-									{latestInspection.finnsDrottning}
-								</span>
-							</div>
-						{/if}
+					<!-- Status Overview Card -->
+					<div class="bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl p-4 border border-amber-200">
+						<div class="flex items-center gap-2 mb-3">
+							<div class="w-2 h-2 rounded-full bg-amber-500"></div>
+							<h4 class="font-semibold text-gray-800">Inspektionsöversikt</h4>
+							<span class="text-xs text-gray-500 ml-auto">Alla registrerade värden</span>
+						</div>
+						<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+							<!-- Core Status Fields -->
+							{#if latestInspection.finnsDrottning}
+								<div class="flex items-center gap-2">
+									<span class="text-lg">👑</span>
+									<div>
+										<div class="text-xs text-gray-600">Drottning</div>
+										<span class="text-sm font-medium {getStatusColor(latestInspection.finnsDrottning)} capitalize">
+											{latestInspection.finnsDrottning}
+										</span>
+									</div>
+								</div>
+							{/if}
 
-						{#if latestInspection.nylagdaÄgg}
-							<div>
-								<span class="text-sm text-gray-600">Nylagda ägg:</span>
-								<span
-									class="ml-2 font-medium {getStatusColor(latestInspection.nylagdaÄgg)} capitalize"
-								>
-									{latestInspection.nylagdaÄgg}
-								</span>
-							</div>
-						{/if}
+							{#if latestInspection.nylagdaÄgg}
+								<div class="flex items-center gap-2">
+									<span class="text-lg">🥚</span>
+									<div>
+										<div class="text-xs text-gray-600">Ägg</div>
+										<span class="text-sm font-medium {getStatusColor(latestInspection.nylagdaÄgg)} capitalize">
+											{latestInspection.nylagdaÄgg}
+										</span>
+									</div>
+								</div>
+							{/if}
 
-						{#if latestInspection.mängdBin}
-							<div>
-								<span class="text-sm text-gray-600">Mängd bin:</span>
-								<span class="ml-2 font-medium {getHealthColor(latestInspection.mängdBin)}">
-									{latestInspection.mängdBin}/5
-								</span>
-							</div>
-						{/if}
+							{#if latestInspection.mängdBin}
+								<div class="flex items-center gap-2">
+									<span class="text-lg">🐝</span>
+									<div>
+										<div class="text-xs text-gray-600">Population</div>
+										<div class="flex items-center gap-1">
+											<span class="text-sm font-medium {getHealthColor(latestInspection.mängdBin)}">
+												{latestInspection.mängdBin}/5
+											</span>
+											<div class="flex gap-0.5">
+												{#each Array(5) as _, i}
+													<div class="w-1.5 h-1.5 rounded-full {i < latestInspection.mängdBin ? 'bg-current' : 'bg-gray-200'} {getHealthColor(latestInspection.mängdBin)}"></div>
+												{/each}
+											</div>
+										</div>
+									</div>
+								</div>
+							{/if}
 
-						{#if latestInspection.binasHälsa}
-							<div>
-								<span class="text-sm text-gray-600">Binas hälsa:</span>
-								<span class="ml-2 font-medium {getHealthColor(latestInspection.binasHälsa)}">
-									{latestInspection.binasHälsa}/5
-								</span>
-							</div>
-						{/if}
+							{#if latestInspection.binasHälsa}
+								<div class="flex items-center gap-2">
+									<span class="text-lg">❤️</span>
+									<div>
+										<div class="text-xs text-gray-600">Hälsa</div>
+										<div class="flex items-center gap-1">
+											<span class="text-sm font-medium {getHealthColor(latestInspection.binasHälsa)}">
+												{latestInspection.binasHälsa}/5
+											</span>
+											<div class="flex gap-0.5">
+												{#each Array(5) as _, i}
+													<div class="w-1.5 h-1.5 rounded-full {i < latestInspection.binasHälsa ? 'bg-current' : 'bg-gray-200'} {getHealthColor(latestInspection.binasHälsa)}"></div>
+												{/each}
+											</div>
+										</div>
+									</div>
+								</div>
+							{/if}
+
+							<!-- Brood & Food -->
+							{#if latestInspection.yngelstatus}
+								<div class="flex items-center gap-2">
+									<span class="text-lg">🍼</span>
+									<div>
+										<div class="text-xs text-gray-600">Yngelstatus</div>
+										<div class="flex items-center gap-1">
+											<span class="text-sm font-medium {getHealthColor(latestInspection.yngelstatus)}">
+												{latestInspection.yngelstatus}/5
+											</span>
+											<div class="flex gap-0.5">
+												{#each Array(5) as _, i}
+													<div class="w-1.5 h-1.5 rounded-full {i < latestInspection.yngelstatus ? 'bg-current' : 'bg-gray-200'} {getHealthColor(latestInspection.yngelstatus)}"></div>
+												{/each}
+											</div>
+										</div>
+									</div>
+								</div>
+							{/if}
+
+							{#if latestInspection.foder}
+								<div class="flex items-center gap-2">
+									<span class="text-lg">🍯</span>
+									<div>
+										<div class="text-xs text-gray-600">Foder</div>
+										<div class="flex items-center gap-1">
+											<span class="text-sm font-medium {getHealthColor(latestInspection.foder)}">
+												{latestInspection.foder}/5
+											</span>
+											<div class="flex gap-0.5">
+												{#each Array(5) as _, i}
+													<div class="w-1.5 h-1.5 rounded-full {i < latestInspection.foder ? 'bg-current' : 'bg-gray-200'} {getHealthColor(latestInspection.foder)}"></div>
+												{/each}
+											</div>
+										</div>
+									</div>
+								</div>
+							{/if}
+
+							<!-- Behavior & Risk -->
+							{#if latestInspection.svärmningsrisk}
+								<div class="flex items-center gap-2">
+									<span class="text-lg">⚠️</span>
+									<div>
+										<div class="text-xs text-gray-600">Svärmningsrisk</div>
+										<div class="flex items-center gap-1">
+											<span class="text-sm font-medium {latestInspection.svärmningsrisk >= 4 ? 'text-red-600' : latestInspection.svärmningsrisk === 3 ? 'text-yellow-600' : 'text-green-600'}">
+												{latestInspection.svärmningsrisk}/5
+											</span>
+											<div class="flex gap-0.5">
+												{#each Array(5) as _, i}
+													<div class="w-1.5 h-1.5 rounded-full {i < latestInspection.svärmningsrisk ? 'bg-current' : 'bg-gray-200'} {latestInspection.svärmningsrisk >= 4 ? 'text-red-600' : latestInspection.svärmningsrisk === 3 ? 'text-yellow-600' : 'text-green-600'}"></div>
+												{/each}
+											</div>
+										</div>
+									</div>
+								</div>
+							{/if}
+
+							{#if latestInspection.aktivitetVidFlustret}
+								<div class="flex items-center gap-2">
+									<span class="text-lg">🚪</span>
+									<div>
+										<div class="text-xs text-gray-600">Aktivitet</div>
+										<div class="flex items-center gap-1">
+											<span class="text-sm font-medium {getHealthColor(latestInspection.aktivitetVidFlustret)}">
+												{latestInspection.aktivitetVidFlustret}/5
+											</span>
+											<div class="flex gap-0.5">
+												{#each Array(5) as _, i}
+													<div class="w-1.5 h-1.5 rounded-full {i < latestInspection.aktivitetVidFlustret ? 'bg-current' : 'bg-gray-200'} {getHealthColor(latestInspection.aktivitetVidFlustret)}"></div>
+												{/each}
+											</div>
+										</div>
+									</div>
+								</div>
+							{/if}
+
+							{#if latestInspection.aggressivitet}
+								<div class="flex items-center gap-2">
+									<span class="text-lg">🐝</span>
+									<div>
+										<div class="text-xs text-gray-600">Aggressivitet</div>
+										<div class="flex items-center gap-1">
+											<span class="text-sm font-medium {latestInspection.aggressivitet >= 4 ? 'text-red-600' : latestInspection.aggressivitet === 3 ? 'text-yellow-600' : 'text-green-600'}">
+												{latestInspection.aggressivitet}/5
+											</span>
+											<div class="flex gap-0.5">
+												{#each Array(5) as _, i}
+													<div class="w-1.5 h-1.5 rounded-full {i < latestInspection.aggressivitet ? 'bg-current' : 'bg-gray-200'} {latestInspection.aggressivitet >= 4 ? 'text-red-600' : latestInspection.aggressivitet === 3 ? 'text-yellow-600' : 'text-green-600'}"></div>
+												{/each}
+											</div>
+										</div>
+									</div>
+								</div>
+							{/if}
+
+							<!-- Health & Condition -->
+							{#if latestInspection.fuktMögel}
+								<div class="flex items-center gap-2">
+									<span class="text-lg">💧</span>
+									<div>
+										<div class="text-xs text-gray-600">Fukt/Mögel</div>
+										<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {latestInspection.fuktMögel === 'ja' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'} capitalize">
+											{latestInspection.fuktMögel}
+										</span>
+									</div>
+								</div>
+							{/if}
+
+							{#if latestInspection.varroastatus}
+								<div class="flex items-center gap-2">
+									<span class="text-lg">🦠</span>
+									<div>
+										<div class="text-xs text-gray-600">Varroa</div>
+										<div class="flex items-center gap-1">
+											<span class="text-sm font-medium {latestInspection.varroastatus >= 4 ? 'text-red-600' : latestInspection.varroastatus === 3 ? 'text-yellow-600' : 'text-green-600'}">
+												{latestInspection.varroastatus}/5
+											</span>
+											<div class="flex gap-0.5">
+												{#each Array(5) as _, i}
+													<div class="w-1.5 h-1.5 rounded-full {i < latestInspection.varroastatus ? 'bg-current' : 'bg-gray-200'} {latestInspection.varroastatus >= 4 ? 'text-red-600' : latestInspection.varroastatus === 3 ? 'text-yellow-600' : 'text-green-600'}"></div>
+												{/each}
+											</div>
+										</div>
+									</div>
+								</div>
+							{/if}
+
+							{#if latestInspection.kupansSkick}
+								<div class="flex items-center gap-2">
+									<span class="text-lg">🏠</span>
+									<div>
+										<div class="text-xs text-gray-600">Kupans skick</div>
+										<div class="flex items-center gap-1">
+											<span class="text-sm font-medium {latestInspection.kupansSkick <= 2 ? 'text-red-600' : latestInspection.kupansSkick === 3 ? 'text-yellow-600' : 'text-green-600'}">
+												{latestInspection.kupansSkick}/5
+											</span>
+											<div class="flex gap-0.5">
+												{#each Array(5) as _, i}
+													<div class="w-1.5 h-1.5 rounded-full {i < latestInspection.kupansSkick ? 'bg-current' : 'bg-gray-200'} {latestInspection.kupansSkick <= 2 ? 'text-red-600' : latestInspection.kupansSkick === 3 ? 'text-yellow-600' : 'text-green-600'}"></div>
+												{/each}
+											</div>
+										</div>
+									</div>
+								</div>
+							{/if}
+
+							<!-- Honey Production -->
+							{#if latestInspection.antalSkattlådar}
+								<div class="flex items-center gap-2">
+									<span class="text-lg">📦</span>
+									<div>
+										<div class="text-xs text-gray-600">Skattlådor</div>
+										<span class="text-sm font-medium text-gray-900">
+											{latestInspection.antalSkattlådar} st
+										</span>
+									</div>
+								</div>
+							{/if}
+
+							{#if latestInspection.skattlådorFulla}
+								<div class="flex items-center gap-2">
+									<span class="text-lg">📊</span>
+									<div>
+										<div class="text-xs text-gray-600">Lådor fulla</div>
+										<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {latestInspection.skattlådorFulla === 'ja' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'} capitalize">
+											{latestInspection.skattlådorFulla}
+										</span>
+									</div>
+								</div>
+							{/if}
+
+							<!-- Environmental (show only if compact) -->
+							{#if latestInspection.väder}
+								<div class="flex items-center gap-2">
+									<span class="text-lg">🌤️</span>
+									<div>
+										<div class="text-xs text-gray-600">Väder</div>
+										<span class="text-sm text-gray-900 truncate max-w-20">
+											{latestInspection.väder}
+										</span>
+									</div>
+								</div>
+							{/if}
+						</div>
 					</div>
 
+					<!-- Notes if available -->
 					{#if latestInspection.notes}
-						<div class="mt-3 pt-3 border-t border-gray-100">
-							<span class="text-sm text-gray-600">Notes:</span>
-							<p class="mt-1 text-sm text-gray-900">{latestInspection.notes}</p>
+						<div class="bg-white rounded-lg border border-gray-200 p-4 mt-4">
+							<div class="flex items-center gap-2 mb-3">
+								<div class="w-2 h-2 rounded-full bg-gray-500"></div>
+								<h4 class="font-semibold text-gray-800">Anteckningar</h4>
+							</div>
+							<div class="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg">
+								{latestInspection.notes}
+							</div>
+						</div>
+					{/if}
+
+					<!-- Planned Actions if available -->
+					{#if latestInspection.planeradÅtgärd}
+						<div class="bg-blue-50 rounded-lg border border-blue-200 p-4 mt-4">
+							<div class="flex items-center gap-2 mb-3">
+								<div class="w-2 h-2 rounded-full bg-blue-500"></div>
+								<h4 class="font-semibold text-gray-800">Planerade Åtgärder</h4>
+							</div>
+							<div class="flex items-start gap-3 p-3 bg-white rounded-lg border border-blue-100">
+								<span class="text-xl">📋</span>
+								<div class="flex-1">
+									<div class="text-sm font-medium text-gray-900 mb-1">Nästa steg</div>
+									<div class="text-sm text-gray-700">{latestInspection.planeradÅtgärd}</div>
+								</div>
+							</div>
 						</div>
 					{/if}
 
 					{#if latestInspection.extractionConfidence}
 						<div class="mt-3 pt-3 border-t border-gray-100">
 							<span class="text-xs text-gray-500">
-								AI Confidence: {Math.round(latestInspection.extractionConfidence * 100)}%
+								AI Säkerhet: {Math.round(latestInspection.extractionConfidence * 100)}%
 							</span>
 						</div>
 					{/if}
@@ -278,191 +419,214 @@
 			{:else}
 				<div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 text-center">
 					<div class="text-gray-400 mb-2">📋</div>
-					<h3 class="text-lg font-medium text-gray-900 mb-1">No Inspections Yet</h3>
+					<h3 class="text-lg font-medium text-gray-900 mb-1">Inga Inspektioner Än</h3>
 					<p class="text-sm text-gray-600 mb-4">
-						No inspection data has been recorded for this hive.
+						Ingen inspektionsdata har registrerats för denna kupa.
 					</p>
 				</div>
 			{/if}
 
-			<!-- Manual Update Section -->
-			{#if !isEditing}
-				<button
-					onclick={startEditing}
-					class="w-full bg-amber-600 text-white py-3 px-4 rounded-xl font-medium active:scale-95 transition-all duration-200"
-				>
-					Update Status Manually
-				</button>
-			{:else}
-				<div class="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-					<h3 class="text-lg font-semibold text-gray-900 mb-4">Update Inspection Status</h3>
-
-					<div class="space-y-4">
-						<!-- Queen Present -->
-						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2">Finns drottning?</label>
-							<select
-								bind:value={editFinnsDrottning}
-								class="w-full px-3 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-							>
-								<option value="">Not specified</option>
-								<option value="ja">Ja</option>
-								<option value="nej">Nej</option>
-							</select>
-						</div>
-
-						<!-- Fresh Eggs -->
-						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2">Nylagda ägg?</label>
-							<select
-								bind:value={editNylagdaÄgg}
-								class="w-full px-3 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-							>
-								<option value="">Not specified</option>
-								<option value="ja">Ja</option>
-								<option value="nej">Nej</option>
-							</select>
-						</div>
-
-						<!-- Bee Quantity -->
-						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2">Mängd bin (1-5)</label>
-							<select
-								bind:value={editMängdBin}
-								class="w-full px-3 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-							>
-								<option value="">Not specified</option>
-								<option value={1}>1 - Very Low</option>
-								<option value={2}>2 - Low</option>
-								<option value={3}>3 - Medium</option>
-								<option value={4}>4 - High</option>
-								<option value={5}>5 - Very High</option>
-							</select>
-						</div>
-
-						<!-- Bee Health -->
-						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2">Binas hälsa (1-5)</label>
-							<select
-								bind:value={editBinasHälsa}
-								class="w-full px-3 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-							>
-								<option value="">Not specified</option>
-								<option value={1}>1 - Very Poor</option>
-								<option value={2}>2 - Poor</option>
-								<option value={3}>3 - Average</option>
-								<option value={4}>4 - Good</option>
-								<option value={5}>5 - Excellent</option>
-							</select>
-						</div>
-
-						<!-- Notes -->
-						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
-							<textarea
-								bind:value={editNotes}
-								placeholder="Additional observations..."
-								rows="3"
-								class="w-full px-3 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 resize-none"
-							></textarea>
-						</div>
-					</div>
-
-					<div class="flex gap-3 mt-6">
-						<button
-							onclick={cancelEditing}
-							class="flex-1 py-3 px-4 border border-gray-300 text-gray-700 rounded-xl font-medium active:scale-95 transition-all duration-200"
-						>
-							Cancel
-						</button>
-						<button
-							onclick={saveInspection}
-							class="flex-1 py-3 px-4 bg-amber-600 text-white rounded-xl font-medium active:scale-95 transition-all duration-200"
-						>
-							Save Status
-						</button>
-					</div>
-				</div>
-			{/if}
-
-			<!-- Inspection History -->
+			<!-- Inspektionshistorik -->
 			{#if hiveInspections.length > 0}
 				<div class="bg-white rounded-xl shadow-sm border border-gray-200">
 					<div class="p-4 border-b border-gray-200">
-						<h3 class="text-lg font-semibold text-gray-900">Inspection History</h3>
+						<h3 class="text-lg font-semibold text-gray-900">Inspektionshistorik</h3>
 					</div>
 
 					<div class="divide-y divide-gray-100">
-						{#each hiveInspections as inspection}
+						{#each hiveInspections as inspection (inspection.id)}
+							{@const typedInspection = inspection as HiveInspection}
 							<div class="p-4">
 								<div class="flex items-center justify-between mb-2">
 									<span class="text-sm font-medium text-gray-900">
-										{formatDate(inspection.timestamp)}
+										{formatDate(typedInspection.timestamp)}
 									</span>
 									<div class="flex items-center gap-2">
-										{#if inspection.source === 'ai'}
+										{#if typedInspection.source === 'ai'}
 											<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full"
 												>AI</span
 											>
 										{:else}
 											<span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full"
-												>Manual</span
+												>Manuell</span
 											>
 										{/if}
-										{#if inspection.confirmed}
+										{#if typedInspection.confirmed}
 											<span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full"
-												>Confirmed</span
+												>Bekräftad</span
 											>
 										{/if}
 									</div>
 								</div>
 
-								<div class="grid grid-cols-2 gap-3 text-sm">
-									{#if inspection.finnsDrottning}
+								<div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+									<!-- Core Status Fields -->
+									{#if typedInspection.finnsDrottning}
 										<div>
 											<span class="text-gray-600">Drottning:</span>
-											<span class="ml-1 {getStatusColor(inspection.finnsDrottning)} capitalize">
-												{inspection.finnsDrottning}
+											<span class="ml-1 {getStatusColor(typedInspection.finnsDrottning)} capitalize">
+												{typedInspection.finnsDrottning}
 											</span>
 										</div>
 									{/if}
 
-									{#if inspection.nylagdaÄgg}
+									{#if typedInspection.nylagdaÄgg}
 										<div>
 											<span class="text-gray-600">Ägg:</span>
-											<span class="ml-1 {getStatusColor(inspection.nylagdaÄgg)} capitalize">
-												{inspection.nylagdaÄgg}
+											<span class="ml-1 {getStatusColor(typedInspection.nylagdaÄgg)} capitalize">
+												{typedInspection.nylagdaÄgg}
 											</span>
 										</div>
 									{/if}
 
-									{#if inspection.mängdBin}
+									{#if typedInspection.mängdBin}
 										<div>
-											<span class="text-gray-600">Bin:</span>
-											<span class="ml-1 {getHealthColor(inspection.mängdBin)}">
-												{inspection.mängdBin}/5
+											<span class="text-gray-600">Population:</span>
+											<span class="ml-1 {getHealthColor(typedInspection.mängdBin)}">
+												{typedInspection.mängdBin}/5
 											</span>
 										</div>
 									{/if}
 
-									{#if inspection.binasHälsa}
+									{#if typedInspection.binasHälsa}
 										<div>
 											<span class="text-gray-600">Hälsa:</span>
-											<span class="ml-1 {getHealthColor(inspection.binasHälsa)}">
-												{inspection.binasHälsa}/5
+											<span class="ml-1 {getHealthColor(typedInspection.binasHälsa)}">
+												{typedInspection.binasHälsa}/5
+											</span>
+										</div>
+									{/if}
+
+									<!-- Brood & Food -->
+									{#if typedInspection.yngelstatus}
+										<div>
+											<span class="text-gray-600">Yngelstatus:</span>
+											<span class="ml-1 {getHealthColor(typedInspection.yngelstatus)}">
+												{typedInspection.yngelstatus}/5
+											</span>
+										</div>
+									{/if}
+
+									{#if typedInspection.foder}
+										<div>
+											<span class="text-gray-600">Foder:</span>
+											<span class="ml-1 {getHealthColor(typedInspection.foder)}">
+												{typedInspection.foder}/5
+											</span>
+										</div>
+									{/if}
+
+									<!-- Behavior & Risk -->
+									{#if typedInspection.svärmningsrisk}
+										<div>
+											<span class="text-gray-600">Svärmningsrisk:</span>
+											<span class="ml-1 {typedInspection.svärmningsrisk >= 4 ? 'text-red-600' : typedInspection.svärmningsrisk === 3 ? 'text-yellow-600' : 'text-green-600'}">
+												{typedInspection.svärmningsrisk}/5
+											</span>
+										</div>
+									{/if}
+
+									{#if typedInspection.aktivitetVidFlustret}
+										<div>
+											<span class="text-gray-600">Aktivitet:</span>
+											<span class="ml-1 {getHealthColor(typedInspection.aktivitetVidFlustret)}">
+												{typedInspection.aktivitetVidFlustret}/5
+											</span>
+										</div>
+									{/if}
+
+									{#if typedInspection.aggressivitet}
+										<div>
+											<span class="text-gray-600">Aggressivitet:</span>
+											<span class="ml-1 {typedInspection.aggressivitet >= 4 ? 'text-red-600' : typedInspection.aggressivitet === 3 ? 'text-yellow-600' : 'text-green-600'}">
+												{typedInspection.aggressivitet}/5
+											</span>
+										</div>
+									{/if}
+
+									<!-- Health & Condition -->
+									{#if typedInspection.fuktMögel}
+										<div>
+											<span class="text-gray-600">Fukt/Mögel:</span>
+											<span class="ml-1 {typedInspection.fuktMögel === 'ja' ? 'text-red-600' : 'text-green-600'} capitalize">
+												{typedInspection.fuktMögel}
+											</span>
+										</div>
+									{/if}
+
+									{#if typedInspection.varroastatus}
+										<div>
+											<span class="text-gray-600">Varroa:</span>
+											<span class="ml-1 {typedInspection.varroastatus >= 4 ? 'text-red-600' : typedInspection.varroastatus === 3 ? 'text-yellow-600' : 'text-green-600'}">
+												{typedInspection.varroastatus}/5
+											</span>
+										</div>
+									{/if}
+
+									{#if typedInspection.kupansSkick}
+										<div>
+											<span class="text-gray-600">Kupans skick:</span>
+											<span class="ml-1 {typedInspection.kupansSkick <= 2 ? 'text-red-600' : typedInspection.kupansSkick === 3 ? 'text-yellow-600' : 'text-green-600'}">
+												{typedInspection.kupansSkick}/5
+											</span>
+										</div>
+									{/if}
+
+									<!-- Honey Production -->
+									{#if typedInspection.antalSkattlådar}
+										<div>
+											<span class="text-gray-600">Skattlådor:</span>
+											<span class="ml-1 text-gray-900">
+												{typedInspection.antalSkattlådar} st
+											</span>
+										</div>
+									{/if}
+
+									{#if typedInspection.skattlådorFulla}
+										<div>
+											<span class="text-gray-600">Lådor fulla:</span>
+											<span class="ml-1 {typedInspection.skattlådorFulla === 'ja' ? 'text-green-600' : 'text-gray-600'} capitalize">
+												{typedInspection.skattlådorFulla}
+											</span>
+										</div>
+									{/if}
+
+									<!-- Environmental -->
+									{#if typedInspection.väder}
+										<div>
+											<span class="text-gray-600">Väder:</span>
+											<span class="ml-1 text-gray-900">
+												{typedInspection.väder}
+											</span>
+										</div>
+									{/if}
+
+									{#if typedInspection.växtDragförhållanden}
+										<div>
+											<span class="text-gray-600">Växt/Drag:</span>
+											<span class="ml-1 text-gray-900 truncate">
+												{typedInspection.växtDragförhållanden}
 											</span>
 										</div>
 									{/if}
 								</div>
 
-								{#if inspection.notes}
-									<p class="mt-2 text-sm text-gray-700">{inspection.notes}</p>
+								<!-- Planned Actions for history -->
+								{#if typedInspection.planeradÅtgärd}
+									<div class="mt-3 p-2 bg-blue-50 rounded-lg border border-blue-100">
+										<span class="text-xs text-blue-600 font-medium">Planerad åtgärd:</span>
+										<p class="text-sm text-blue-800 mt-1">{typedInspection.planeradÅtgärd}</p>
+									</div>
 								{/if}
 
-								{#if inspection.extractionConfidence}
+								{#if typedInspection.notes}
+									<p class="mt-2 text-sm text-gray-700">{typedInspection.notes}</p>
+								{/if}
+
+								{#if typedInspection.extractionConfidence}
 									<div class="mt-2">
 										<span class="text-xs text-gray-500">
-											AI Confidence: {Math.round(inspection.extractionConfidence * 100)}%
+											AI Säkerhet: {Math.round(typedInspection.extractionConfidence * 100)}%
 										</span>
 									</div>
 								{/if}
@@ -471,6 +635,22 @@
 					</div>
 				</div>
 			{/if}
+		</div>
+	{:else}
+		<div class="p-4">
+			<div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 text-center">
+				<div class="text-gray-400 mb-4 text-4xl">⚠️</div>
+				<h2 class="text-lg font-semibold text-gray-900 mb-2">Kupan Hittades Inte</h2>
+				<p class="text-sm text-gray-600 mb-6">
+					Kupan du letar efter existerar inte eller kan ha tagits bort.
+				</p>
+				<button
+					onclick={() => goto('/hives')}
+					class="bg-amber-600 text-white px-6 py-3 rounded-xl font-medium active:scale-95 transition-all duration-200"
+				>
+					Tillbaka till Kupor
+				</button>
+			</div>
 		</div>
 	{/if}
 </div>
