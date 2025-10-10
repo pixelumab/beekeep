@@ -1,6 +1,8 @@
 <script lang="ts">
 	import favicon from '$lib/assets/favicon.svg';
 	import { page } from '$app/stores';
+	import { onMount } from 'svelte';
+	import { browser } from '$app/environment';
 	import type { NavigationTab } from '$lib/types.js';
 
 	let { children } = $props();
@@ -12,6 +14,23 @@
 	];
 
 	let currentPath = $derived($page.url.pathname);
+
+	// Load VAPI script once in the layout so it persists across navigation
+	onMount(() => {
+		if (browser) {
+			// Check if script is already loaded
+			if (document.querySelector('script[src*="vapi-ai"]')) {
+				return;
+			}
+
+			// Load the VAPI widget script dynamically
+			const script = document.createElement('script');
+			script.src = 'https://unpkg.com/@vapi-ai/client-sdk-react/dist/embed/widget.umd.js';
+			script.async = true;
+			script.type = 'text/javascript';
+			document.head.appendChild(script);
+		}
+	});
 </script>
 
 <svelte:head>
