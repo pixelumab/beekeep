@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
 
 	interface Stats {
@@ -274,28 +273,4 @@
 			</button>
 		</div>
 	</div>
-
-	<!-- VAPI Widget -->
-	{#if browser}
-		<vapi-widget
-			public-key="b5874460-bc03-4a8c-ba50-3a911545c804"
-			assistant-id="902f8839-4539-46cb-9a93-f581aa17a5d4"
-			mode="voice"
-			theme="dark"
-			base-bg-color="#000000"
-			accent-color="#F59E0B"
-			cta-button-color="#F59E0B"
-			cta-button-text-color="#000000"
-			border-radius="large"
-			size="full"
-			position="bottom-right"
-			title="TALK WITH AI"
-			start-button-text="Start"
-			end-button-text="End Call"
-			chat-first-message="Hey, How can I help you today?"
-			chat-placeholder="Type your message..."
-			voice-show-transcript="false"
-			consent-required="false"
-		></vapi-widget>
-	{/if}
 </div>

@@ -1,17 +1,20 @@
 {
-	"permissions": {
-		"allow": [
-			"Bash(pnpm dev:*)",
-			"Bash(pnpm check:*)",
-			"Bash(pnpm format:*)",
-			"Bash(pnpm lint:*)",
-			"Bash(pnpm build:*)",
-			"Bash(pnpm add bits-ui mode-watcher)",
-			"Bash(pnpm dlx shadcn-svelte@latest add button card input dialog sheet label --yes)",
-			"Bash(pnpm dlx shadcn-svelte@latest add badge alert separator select textarea --yes)",
-			"Bash(cat:*)"
-		]
-	},
-	"enableAllProjectMcpServers": true,
-	"enabledMcpjsonServers": ["svelte-llm"]
+  "permissions": {
+    "allow": [
+      "Bash(pnpm dev:*)",
+      "Bash(pnpm check:*)",
+      "Bash(pnpm format:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm add bits-ui mode-watcher)",
+      "Bash(pnpm dlx shadcn-svelte@latest add button card input dialog sheet label --yes)",
+      "Bash(pnpm dlx shadcn-svelte@latest add badge alert separator select textarea --yes)",
+      "Bash(cat:*)",
+      "WebFetch(domain:docs.vapi.ai)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "svelte-llm"
+  ]
 }
