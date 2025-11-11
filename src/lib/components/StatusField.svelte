@@ -67,7 +67,7 @@
 							{displayValue}
 						</span>
 						<div class="flex gap-0.5">
-							{#each Array(maxScale) as _, i}
+							{#each Array(maxScale) as _, i (i)}
 								<div
 									class="w-1.5 h-1.5 rounded-full {i < value
 										? 'bg-current'

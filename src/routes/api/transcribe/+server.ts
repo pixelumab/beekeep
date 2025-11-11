@@ -154,7 +154,8 @@ CRITICAL: Return ONLY the JSON array, no explanations, no markdown formatting.`;
 				messages: [
 					{
 						role: 'system',
-						content: 'You are an expert beekeeping consultant analyzing hive inspection recordings. Provide accurate, helpful assessments based on transcribed observations.'
+						content:
+							'You are an expert beekeeping consultant analyzing hive inspection recordings. Provide accurate, helpful assessments based on transcribed observations.'
 					},
 					{
 						role: 'user',
@@ -213,7 +214,7 @@ CRITICAL: Return ONLY the JSON array, no explanations, no markdown formatting.`;
 			// This regex finds text values and escapes quotes within them
 			cleanedContent = cleanedContent.replace(
 				/"([^"]*)"(\s*:\s*)"([^"]*(?:\\.[^"]*)*)"/g,
-				(match, key, separator, value) => {
+				(match: string, key: string, separator: string, value: string) => {
 					// Escape internal quotes and backslashes in the value
 					const escapedValue = value
 						.replace(/\\/g, '\\\\') // Escape backslashes first
@@ -256,82 +257,100 @@ CRITICAL: Return ONLY the JSON array, no explanations, no markdown formatting.`;
 		const inspectionResults = [];
 
 		for (const hiveData of rawResults) {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const data = hiveData as any;
 			// Skip if no bikupa identifier (required field)
-			if (!hiveData.bikupa) continue;
+			if (!data.bikupa) continue;
 
-			const inspectionResult = {
-				bikupa: hiveData.bikupa
+			const inspectionResult: Record<string, unknown> = {
+				bikupa: data.bikupa
 			};
 
 			// Add all the validation from original code
-			if (hiveData.bigård) inspectionResult.bigård = hiveData.bigård;
-			if (hiveData.finnsDrottning === 'ja' || hiveData.finnsDrottning === 'nej') {
-				inspectionResult.finnsDrottning = hiveData.finnsDrottning;
+			if (data.bigård) inspectionResult.bigård = data.bigård;
+			if (data.finnsDrottning === 'ja' || data.finnsDrottning === 'nej') {
+				inspectionResult.finnsDrottning = data.finnsDrottning;
 			}
-			if (hiveData.nylagdaÄgg === 'ja' || hiveData.nylagdaÄgg === 'nej') {
-				inspectionResult.nylagdaÄgg = hiveData.nylagdaÄgg;
+			if (data.nylagdaÄgg === 'ja' || data.nylagdaÄgg === 'nej') {
+				inspectionResult.nylagdaÄgg = data.nylagdaÄgg;
 			}
-			if (typeof hiveData.mängdBin === 'number' && hiveData.mängdBin >= 1 && hiveData.mängdBin <= 5) {
-				inspectionResult.mängdBin = hiveData.mängdBin;
+			if (typeof data.mängdBin === 'number' && data.mängdBin >= 1 && data.mängdBin <= 5) {
+				inspectionResult.mängdBin = data.mängdBin;
 			}
-			if (typeof hiveData.binasHälsa === 'number' && hiveData.binasHälsa >= 1 && hiveData.binasHälsa <= 5) {
-				inspectionResult.binasHälsa = hiveData.binasHälsa;
+			if (typeof data.binasHälsa === 'number' && data.binasHälsa >= 1 && data.binasHälsa <= 5) {
+				inspectionResult.binasHälsa = data.binasHälsa;
 			}
 
 			// Extended fields - Brood & Food (1-5 scale)
-			if (typeof hiveData.yngelstatus === 'number' && hiveData.yngelstatus >= 1 && hiveData.yngelstatus <= 5) {
-				inspectionResult.yngelstatus = hiveData.yngelstatus;
+			if (typeof data.yngelstatus === 'number' && data.yngelstatus >= 1 && data.yngelstatus <= 5) {
+				inspectionResult.yngelstatus = data.yngelstatus;
 			}
-			if (typeof hiveData.foder === 'number' && hiveData.foder >= 1 && hiveData.foder <= 5) {
-				inspectionResult.foder = hiveData.foder;
+			if (typeof data.foder === 'number' && data.foder >= 1 && data.foder <= 5) {
+				inspectionResult.foder = data.foder;
 			}
 
 			// Extended fields - Behavior & Risk (1-5 scale)
-			if (typeof hiveData.svärmningsrisk === 'number' && hiveData.svärmningsrisk >= 1 && hiveData.svärmningsrisk <= 5) {
-				inspectionResult.svärmningsrisk = hiveData.svärmningsrisk;
+			if (
+				typeof data.svärmningsrisk === 'number' &&
+				data.svärmningsrisk >= 1 &&
+				data.svärmningsrisk <= 5
+			) {
+				inspectionResult.svärmningsrisk = data.svärmningsrisk;
 			}
-			if (typeof hiveData.aktivitetVidFlustret === 'number' && hiveData.aktivitetVidFlustret >= 1 && hiveData.aktivitetVidFlustret <= 5) {
-				inspectionResult.aktivitetVidFlustret = hiveData.aktivitetVidFlustret;
+			if (
+				typeof data.aktivitetVidFlustret === 'number' &&
+				data.aktivitetVidFlustret >= 1 &&
+				data.aktivitetVidFlustret <= 5
+			) {
+				inspectionResult.aktivitetVidFlustret = data.aktivitetVidFlustret;
 			}
-			if (typeof hiveData.aggressivitet === 'number' && hiveData.aggressivitet >= 1 && hiveData.aggressivitet <= 5) {
-				inspectionResult.aggressivitet = hiveData.aggressivitet;
+			if (
+				typeof data.aggressivitet === 'number' &&
+				data.aggressivitet >= 1 &&
+				data.aggressivitet <= 5
+			) {
+				inspectionResult.aggressivitet = data.aggressivitet;
 			}
 
 			// Extended fields - Environmental
-			if (typeof hiveData.väder === 'string' && hiveData.väder.trim()) {
-				inspectionResult.väder = hiveData.väder.trim();
+			if (typeof data.väder === 'string' && data.väder.trim()) {
+				inspectionResult.väder = data.väder.trim();
 			}
-			if (typeof hiveData.växtDragförhållanden === 'string' && hiveData.växtDragförhållanden.trim()) {
-				inspectionResult.växtDragförhållanden = hiveData.växtDragförhållanden.trim();
+			if (typeof data.växtDragförhållanden === 'string' && data.växtDragförhållanden.trim()) {
+				inspectionResult.växtDragförhållanden = data.växtDragförhållanden.trim();
 			}
 
 			// Extended fields - Health & Condition (ja/nej and 1-5)
-			if (hiveData.fuktMögel === 'ja' || hiveData.fuktMögel === 'nej') {
-				inspectionResult.fuktMögel = hiveData.fuktMögel;
+			if (data.fuktMögel === 'ja' || data.fuktMögel === 'nej') {
+				inspectionResult.fuktMögel = data.fuktMögel;
 			}
-			if (typeof hiveData.varroastatus === 'number' && hiveData.varroastatus >= 1 && hiveData.varroastatus <= 5) {
-				inspectionResult.varroastatus = hiveData.varroastatus;
+			if (
+				typeof data.varroastatus === 'number' &&
+				data.varroastatus >= 1 &&
+				data.varroastatus <= 5
+			) {
+				inspectionResult.varroastatus = data.varroastatus;
 			}
-			if (typeof hiveData.kupansSkick === 'number' && hiveData.kupansSkick >= 1 && hiveData.kupansSkick <= 5) {
-				inspectionResult.kupansSkick = hiveData.kupansSkick;
+			if (typeof data.kupansSkick === 'number' && data.kupansSkick >= 1 && data.kupansSkick <= 5) {
+				inspectionResult.kupansSkick = data.kupansSkick;
 			}
 
 			// Extended fields - Honey Production (numbers and ja/nej)
-			if (typeof hiveData.antalSkattlådar === 'number' && hiveData.antalSkattlådar >= 0) {
-				inspectionResult.antalSkattlådar = Math.floor(hiveData.antalSkattlådar);
+			if (typeof data.antalSkattlådar === 'number' && data.antalSkattlådar >= 0) {
+				inspectionResult.antalSkattlådar = Math.floor(data.antalSkattlådar);
 			}
-			if (hiveData.skattlådorFulla === 'ja' || hiveData.skattlådorFulla === 'nej') {
-				inspectionResult.skattlådorFulla = hiveData.skattlådorFulla;
+			if (data.skattlådorFulla === 'ja' || data.skattlådorFulla === 'nej') {
+				inspectionResult.skattlådorFulla = data.skattlådorFulla;
 			}
 
 			// Extended fields - Planning
-			if (typeof hiveData.planeradÅtgärd === 'string' && hiveData.planeradÅtgärd.trim()) {
-				inspectionResult.planeradÅtgärd = hiveData.planeradÅtgärd.trim();
+			if (typeof data.planeradÅtgärd === 'string' && data.planeradÅtgärd.trim()) {
+				inspectionResult.planeradÅtgärd = data.planeradÅtgärd.trim();
 			}
 
 			// Confidence tracking
-			if (typeof hiveData.extractionConfidence === 'number') {
-				inspectionResult.extractionConfidence = Math.max(0, Math.min(1, hiveData.extractionConfidence));
+			if (typeof data.extractionConfidence === 'number') {
+				inspectionResult.extractionConfidence = Math.max(0, Math.min(1, data.extractionConfidence));
 			}
 
 			inspectionResults.push(inspectionResult);

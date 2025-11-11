@@ -3,7 +3,7 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { hives, inspections, getHives, getInspections } from '$lib/stores.svelte.js';
-	import type { Hive, HiveInspection } from '$lib/types.js';
+	import type { HiveInspection } from '$lib/types';
 
 	// Core state
 	let fromSession = $state(false);
@@ -61,47 +61,83 @@
 	}
 </script>
 
-<div class="min-h-full bg-gray-50 pb-20">
+<div class="min-h-full bg-gradient-to-b from-gray-50 to-white pb-20">
 	<!-- Header -->
-	<div class="bg-white border-b border-gray-200 px-4 py-4">
-		<div class="flex items-center gap-3">
-			<button
-				onclick={() => (fromSession ? goto('/sessions') : goto('/hives'))}
-				class="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
-			>
-				←
-			</button>
-			{#if hive}
-				<div class="flex-1">
-					<h1 class="text-xl font-bold text-gray-900">{hive.name}</h1>
-					{#if hive.location}
-						<p class="text-sm text-gray-600">{hive.location}</p>
-					{/if}
-				</div>
-				<div class="w-4 h-4 rounded-full" style="background-color: {hive.color || '#10B981'}"></div>
-			{/if}
+	<div
+		class="bg-gradient-to-r from-green-50 to-emerald-50 border-b-2 border-green-200 px-4 sm:px-6 lg:px-8 py-6"
+	>
+		<div class="max-w-4xl mx-auto">
+			<div class="flex items-center gap-4 mb-4">
+				<button
+					onclick={() => (fromSession ? goto('/sessions') : goto('/hives'))}
+					class="p-2 text-gray-600 hover:text-gray-800 hover:bg-white/50 rounded-lg transition-colors"
+				>
+					<span class="text-xl">←</span>
+				</button>
+				{#if hive}
+					<div
+						class="w-16 h-16 rounded-xl flex items-center justify-center text-white text-xl font-bold shadow-md"
+						style="background-color: {hive.color || '#10B981'}"
+					>
+						{hive.name.substring(0, 2).toUpperCase()}
+					</div>
+					<div class="flex-1">
+						<h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{hive.name}</h1>
+						{#if hive.location}
+							<p class="text-base text-gray-600 flex items-center gap-1">
+								<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+									<path
+										fill-rule="evenodd"
+										d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+										clip-rule="evenodd"
+									/>
+								</svg>
+								{hive.location}
+							</p>
+						{/if}
+					</div>
+				{/if}
+			</div>
 		</div>
 	</div>
 
 	{#if hive}
-		<div class="p-4 space-y-6">
+		<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
 			<!-- Session Context Indicator -->
 			{#if fromSession}
-				<div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
-					<div class="flex items-center gap-2 mb-2">
-						<span class="text-blue-600">🎤</span>
-						<span class="text-blue-800 font-medium">Visad från Inspelningssession</span>
+				<div class="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6">
+					<div class="flex items-center gap-3 mb-3">
+						<div
+							class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center shadow-md"
+						>
+							<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+								/>
+							</svg>
+						</div>
+						<div class="flex-1">
+							<span class="text-lg font-bold text-blue-900 block mb-1"
+								>Visad från Inspelningssession</span
+							>
+							<p class="text-sm text-blue-700">
+								Denna kupa uppdaterades nyligen från en transkriberad inspelning. Använd
+								tillbaka-knappen för att återgå till dina sessioner.
+							</p>
+						</div>
 					</div>
-					<p class="text-blue-700 text-sm">
-						Denna kupa uppdaterades nyligen från en transkriberad inspelning. Använd
-						tillbaka-knappen för att återgå till dina sessioner.
-					</p>
 				</div>
 			{/if}
 
 			<!-- Latest Status Card -->
 			{#if latestInspection}
-				<div class="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+				<button
+					onclick={() => goto(`/inspections/${latestInspection.id}`)}
+					class="w-full bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer text-left"
+				>
 					<div class="flex items-center justify-between mb-3">
 						<h2 class="text-lg font-semibold text-gray-900">Senaste Status</h2>
 						<div class="flex items-center gap-2">
@@ -521,12 +557,38 @@
 							</span>
 						</div>
 					{/if}
-				</div>
+
+					<!-- Visual indicator for clickable -->
+					<div
+						class="mt-4 pt-3 border-t border-gray-100 flex items-center justify-center gap-1 text-sm text-blue-600 font-medium"
+					>
+						<span>Visa fullständig inspektion</span>
+						<span>→</span>
+					</div>
+				</button>
 			{:else}
-				<div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 text-center">
-					<div class="text-gray-400 mb-2">📋</div>
-					<h3 class="text-lg font-medium text-gray-900 mb-1">Inga Inspektioner Än</h3>
-					<p class="text-sm text-gray-600 mb-4">
+				<div
+					class="bg-white rounded-2xl p-6 shadow-lg border-2 border-dashed border-gray-300 text-center"
+				>
+					<div
+						class="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-4"
+					>
+						<svg
+							class="w-8 h-8 text-gray-400"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+							/>
+						</svg>
+					</div>
+					<h3 class="text-xl font-bold text-gray-900 mb-2">Inga Inspektioner Än</h3>
+					<p class="text-base text-gray-600">
 						Ingen inspektionsdata har registrerats för denna kupa.
 					</p>
 				</div>
@@ -534,15 +596,18 @@
 
 			<!-- Inspektionshistorik -->
 			{#if hiveInspections.length > 0}
-				<div class="bg-white rounded-xl shadow-sm border border-gray-200">
-					<div class="p-4 border-b border-gray-200">
-						<h3 class="text-lg font-semibold text-gray-900">Inspektionshistorik</h3>
+				<div class="bg-white rounded-2xl shadow-lg border-2 border-gray-200">
+					<div class="p-6 border-b-2 border-gray-200">
+						<h3 class="text-xl font-bold text-gray-900">Inspektionshistorik</h3>
 					</div>
 
 					<div class="divide-y divide-gray-100">
 						{#each hiveInspections as inspection (inspection.id)}
 							{@const typedInspection = inspection as HiveInspection}
-							<div class="p-4">
+							<button
+								onclick={() => goto(`/inspections/${inspection.id}`)}
+								class="w-full p-6 text-left hover:bg-gray-50 transition-all duration-200 cursor-pointer"
+							>
 								<div class="flex items-center justify-between mb-2">
 									<span class="text-sm font-medium text-gray-900">
 										{formatDate(typedInspection.timestamp)}
@@ -770,23 +835,39 @@
 										</span>
 									</div>
 								{/if}
-							</div>
+
+								<!-- Visual indicator for clickable -->
+								<div class="mt-2 flex items-center gap-1 text-xs text-blue-600">
+									<span>Visa detaljer</span>
+									<span>→</span>
+								</div>
+							</button>
 						{/each}
 					</div>
 				</div>
 			{/if}
 		</div>
 	{:else}
-		<div class="p-4">
-			<div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 text-center">
-				<div class="text-gray-400 mb-4 text-4xl">⚠️</div>
-				<h2 class="text-lg font-semibold text-gray-900 mb-2">Kupan Hittades Inte</h2>
-				<p class="text-sm text-gray-600 mb-6">
+		<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+			<div class="bg-white rounded-2xl p-6 shadow-lg border-2 border-red-200 text-center">
+				<div
+					class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4"
+				>
+					<svg class="w-10 h-10 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+						<path
+							fill-rule="evenodd"
+							d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+							clip-rule="evenodd"
+						/>
+					</svg>
+				</div>
+				<h2 class="text-2xl font-bold text-gray-900 mb-2">Kupan Hittades Inte</h2>
+				<p class="text-base text-gray-600 mb-6">
 					Kupan du letar efter existerar inte eller kan ha tagits bort.
 				</p>
 				<button
 					onclick={() => goto('/hives')}
-					class="bg-amber-600 text-white px-6 py-3 rounded-xl font-medium active:scale-95 transition-all duration-200"
+					class="bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 active:scale-95 transition-all duration-200 shadow-md hover:shadow-lg"
 				>
 					Tillbaka till Kupor
 				</button>

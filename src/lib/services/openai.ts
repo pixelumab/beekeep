@@ -46,7 +46,7 @@ export async function transcribeAndAnalyze(audioBlob: Blob): Promise<{
 		}
 
 		const result = await response.json();
-		
+
 		return {
 			transcription: result.transcription || {
 				text: '',

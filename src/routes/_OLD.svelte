@@ -9,7 +9,6 @@
 		getHives,
 		getSessions
 	} from '$lib/stores.svelte.js';
-	import type { Hive } from '$lib/types.js';
 
 	let isActiveSession = $derived(getActiveSession() !== null);
 	let availableHives = $derived(hives.getActiveHives(getHives()));

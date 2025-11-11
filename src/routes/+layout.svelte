@@ -1,19 +1,32 @@
 <script lang="ts">
+	import '../app.css';
 	import favicon from '$lib/assets/favicon.svg';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
-	import type { NavigationTab } from '$lib/types.js';
 
 	let { children } = $props();
 
-	const navigationTabs: NavigationTab[] = [
-		{ id: 'record', label: 'Spela in', icon: '●', path: '/' },
-		{ id: 'sessions', label: 'Sessioner', icon: '≡', path: '/sessions' },
-		{ id: 'hives', label: 'Kupor', icon: '▢', path: '/hives' }
+	interface NavigationItem {
+		path: string;
+		label: string;
+		icon: string;
+	}
+
+	const navigation: NavigationItem[] = [
+		{ path: '/', label: 'Översikt', icon: '📊' },
+		{ path: '/hives', label: 'Kupor', icon: '🏠' },
+		{ path: '/sessions', label: 'Sessioner', icon: '📞' }
 	];
 
 	let currentPath = $derived($page.url.pathname);
+
+	function isActive(path: string): boolean {
+		if (path === '/') {
+			return currentPath === '/';
+		}
+		return currentPath.startsWith(path);
+	}
 
 	// Load VAPI script once in the layout so it persists across navigation
 	onMount(() => {
@@ -36,84 +49,62 @@
 <svelte:head>
 	<link rel="icon" href={favicon} />
 	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-	<title>BeeKeep - Kuphantering</title>
-	<script src="https://cdn.tailwindcss.com"></script>
-	<style>
-		/* Mobile-first CSS variables */
-		:root {
-			--safe-area-inset-top: env(safe-area-inset-top);
-			--safe-area-inset-right: env(safe-area-inset-right);
-			--safe-area-inset-bottom: env(safe-area-inset-bottom);
-			--safe-area-inset-left: env(safe-area-inset-left);
-		}
-
-		/* Prevent zoom on input focus on iOS */
-		input[type='text'],
-		input[type='email'],
-		input[type='tel'],
-		textarea,
-		select {
-			font-size: 16px;
-		}
-
-		/* Mobile viewport handling */
-		.app-container {
-			height: 100vh;
-			height: 100dvh; /* Dynamic viewport height for mobile */
-			height: 100svh; /* Small viewport height for mobile */
-		}
-
-		/* Custom scrollbar for desktop */
-		@media (min-width: 768px) {
-			::-webkit-scrollbar {
-				width: 6px;
-			}
-			::-webkit-scrollbar-track {
-				background: #f8fafc;
-			}
-			::-webkit-scrollbar-thumb {
-				background: #cbd5e1;
-				border-radius: 3px;
-			}
-			::-webkit-scrollbar-thumb:hover {
-				background: #94a3b8;
-			}
-		}
-
-		/* Hide scrollbar on mobile */
-		@media (max-width: 767px) {
-			::-webkit-scrollbar {
-				display: none;
-			}
-		}
-	</style>
+	<title>BeeKeep - Hive Management</title>
 </svelte:head>
 
-<!-- Mobile-first app container -->
-<div class="app-container bg-white flex flex-col">
-	<!-- Main content area -->
-	<main class="flex-1 overflow-y-auto">
+<div class="min-h-screen bg-gray-50 flex flex-col">
+	<!-- Top Navigation Bar -->
+	<header class="bg-white border-b sticky top-0 z-10">
+		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+			<div class="flex items-center justify-between h-16">
+				<!-- Logo -->
+				<div class="flex items-center gap-3">
+					<div class="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
+						<span class="text-lg">🐝</span>
+					</div>
+					<span class="text-lg font-semibold text-gray-900 hidden sm:inline">BeeKeep</span>
+				</div>
+
+				<!-- Desktop Navigation -->
+				<nav class="hidden md:flex items-center gap-1">
+					{#each navigation as item}
+						<a
+							href={item.path}
+							class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {isActive(item.path)
+								? 'bg-amber-50 text-amber-700'
+								: 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}"
+						>
+							<span class="mr-2">{item.icon}</span>
+							{item.label}
+						</a>
+					{/each}
+				</nav>
+			</div>
+		</div>
+	</header>
+
+	<!-- Main Content -->
+	<main class="flex-1 overflow-y-auto pb-16 md:pb-0">
 		{@render children?.()}
 	</main>
 
-	<!-- Bottom navigation - mobile optimized -->
+	<!-- Mobile Bottom Navigation -->
 	<nav
-		class="bg-white border-t border-gray-100 px-2 py-1 flex-shrink-0"
-		style="padding-bottom: calc(0.5rem + var(--safe-area-inset-bottom));"
+		class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t z-20"
+		style="padding-bottom: env(safe-area-inset-bottom);"
 	>
-		<div class="flex">
-			{#each navigationTabs as tab}
+		<div class="grid grid-cols-3 h-16">
+			{#each navigation as item}
 				<a
-					href={tab.path}
-					class="flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-all duration-200 active:scale-95 {currentPath ===
-						tab.path ||
-					(tab.path === '/' && currentPath === '/session')
-						? 'text-amber-600 bg-amber-50 shadow-sm'
-						: 'text-gray-600 active:bg-gray-50'}"
-					data-sveltekit-preload-data="hover"
+					href={item.path}
+					class="flex flex-col items-center justify-center gap-1 transition-colors {isActive(
+						item.path
+					)
+						? 'text-amber-600'
+						: 'text-gray-600'}"
 				>
-					<div class="text-lg font-bold mb-0.5">{tab.icon}</div>
-					<div class="text-xs font-medium">{tab.label}</div>
+					<span class="text-xl">{item.icon}</span>
+					<span class="text-xs font-medium">{item.label}</span>
 				</a>
 			{/each}
 		</div>

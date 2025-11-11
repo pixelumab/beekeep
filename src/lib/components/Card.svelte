@@ -4,6 +4,7 @@
 		shadow?: 'none' | 'sm' | 'md' | 'lg';
 		rounded?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
 		border?: boolean;
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		children: any;
 	}
 

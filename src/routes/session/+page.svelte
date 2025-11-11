@@ -22,7 +22,7 @@
 	let audioChunks: Blob[] = $state([]);
 	let recordedAudio: string | null = $state(null);
 	let recordingDuration = $state(0);
-	let durationInterval: number | null = $state(null);
+	let durationInterval: ReturnType<typeof setInterval> | null = $state(null);
 	let permissionStatus = $state<'requesting' | 'granted' | 'denied' | 'unsupported'>('requesting');
 
 	// Transcription state
@@ -71,7 +71,7 @@
 				permissionStatus = 'granted';
 				setupMediaRecorder(stream);
 			})
-			.catch((err) => {
+			.catch((_) => {
 				permissionStatus = 'denied';
 			});
 	}
